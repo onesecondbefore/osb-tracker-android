@@ -10,9 +10,9 @@ import org.json.JSONObject;
 
 import java.util.Dictionary;
 
-public final class Osb implements LifecycleObserver {
+public final class OSB implements LifecycleObserver {
     private static final String TAG = "OSB:Api";
-    private static Osb mInstance = null;
+    private static OSB mInstance = null;
 
     private Config mConfig = new Config();
     private GpsTracker mGpsTracker = null;
@@ -26,9 +26,10 @@ public final class Osb implements LifecycleObserver {
         clear();
     }
 
-    public static Osb getInstance() {
+    public static OSB getInstance(Context context) {
         if (mInstance == null) {
-            mInstance = new Osb();
+            mInstance = new OSB();
+            mInstance.mContext = context;
         }
         return mInstance;
     }
@@ -40,32 +41,23 @@ public final class Osb implements LifecycleObserver {
         }
 
         if (mQueue != null) {
-            mQueue.destory();
+            mQueue.destroy();
             mQueue = null;
         }
     }
 
-    public void initialize(Context context, String accountId, String url) {
-        mContext = context;
-        mConfig.setAccountId(accountId);
-        mConfig.setServerUrl(url);
-
-        clear();
-        mQueue = new ApiQueue(context);
-        startGpsTracker();
-
-        Log.i(TAG, "OSB - Initialized");
+    public void initialize(String accountId, String url) {
+        initialize(accountId, url, null, null);
     }
 
-    public void initialize(Context context, String accountId, String url, String siteId, String domain) {
-        mContext = context;
+    public void initialize(String accountId, String url, String siteId, String domain) {
         mConfig.setAccountId(accountId);
         mConfig.setServerUrl(url);
         mConfig.setSiteId(siteId);
         mConfig.setDomain(domain);
 
         clear();
-        mQueue = new ApiQueue(context);
+        mQueue = new ApiQueue(mContext);
         startGpsTracker();
 
         Log.i(TAG, "OSB - Initialized");
@@ -76,26 +68,16 @@ public final class Osb implements LifecycleObserver {
     }
 
     public void sendEvent(EventType type) {
-        sendEventToQueue(type, "", null, null);
+        sendEventToQueue(type, "", null);
     }
 
     public void sendEvent(EventType type, Dictionary<String, Object> data) {
-        sendEventToQueue(type, "", data, null);
-    }
-
-    public void sendEvent(EventType type, Dictionary<String, Object> data,
-                          String[] trackIdentifiers) {
-        sendEventToQueue(type, "", data, trackIdentifiers);
+        sendEventToQueue(type, "", data);
     }
 
     public void sendEvent(EventType type, String actionType,
                           Dictionary<String, Object> data) {
-        sendEventToQueue(type, actionType, data, null);
-    }
-
-    public void sendEvent(EventType type, String actionType,
-                          Dictionary<String, Object> data, String[] trackIdentifiers) {
-        sendEventToQueue(type, actionType, data, trackIdentifiers);
+        sendEventToQueue(type, actionType, data);
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
@@ -130,12 +112,12 @@ public final class Osb implements LifecycleObserver {
     }
 
     private void sendEventToQueue(EventType type, String actionType,
-                                  Dictionary<String, Object> data, String[] trackIdentifiers) {
+                                  Dictionary<String, Object> data) {
         if (mQueue != null) {
             this.startGpsTracker();
 
-            final Event event = new Event(type, actionType, data, trackIdentifiers,
-                mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude() );
+            final Event event = new Event(type, actionType, data,
+                mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
             Thread t = new Thread(new Runnable() {
                 public void run() {
                     JsonGenerator generator = new JsonGenerator(mContext);

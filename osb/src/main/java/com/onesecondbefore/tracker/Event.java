@@ -1,20 +1,19 @@
 package com.onesecondbefore.tracker;
 
-import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 public class Event {
     private EventType mType = EventType.EVENT;
-    private ArrayList<String> mNameSpaces = new ArrayList<String>();
-    private Dictionary<String, Object> mData = new Hashtable<String, Object>();
+    private String mNamespace = "default";
+    private Dictionary<String, Object> mData = new Hashtable<>();
     private String mSubType = "";
     private boolean mIsGpsEnabled = false;
     private double mLatitude = 0;
     private double mLongitude = 0;
 
     Event(EventType type, String subType, Dictionary<String, Object> data,
-          String[] namespaces, boolean isGpsEnabled, double latitude, double longitude) {
+          boolean isGpsEnabled, double latitude, double longitude) {
         mType = type;
         mSubType = subType != null ? subType : "";
         mIsGpsEnabled = isGpsEnabled;
@@ -24,36 +23,10 @@ public class Event {
         if (data != null) {
             mData = data;
         }
-
-        if (namespaces != null) {
-            for (int i = 0; i < namespaces.length; i++) {
-                mNameSpaces.add(namespaces[i]);
-            }
-        }
     }
 
-    public ArrayList<String> getNamespaces()  {
-        return mNameSpaces;
-    }
-
-    public String getNamespacesValue() {
-        if (mNameSpaces.isEmpty()) {
-            return "default";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        String separator = ",";
-
-        for (int i = 0; i < mNameSpaces.size(); i++) {
-            sb.append(mNameSpaces.get(i));
-
-            // if not the last item
-            if (i != mNameSpaces.size() - 1) {
-                sb.append(separator);
-            }
-        }
-
-        return sb.toString();
+    public String getNamespace()  {
+        return mNamespace;
     }
 
     public String getTypeValue() {
@@ -62,6 +35,8 @@ public class Event {
             value = "event";
         } else if (mType == EventType.SCREENVIEW) {
             value = "screenview";
+        } else if (mType == EventType.PAGEVIEW) {
+            value = "pageview";
         } else if (mType == EventType.ACTION) {
             value = "action";
         } else if (mType == EventType.IDS) {
@@ -93,6 +68,8 @@ public class Event {
             key = "ev";
         } else if (mType == EventType.SCREENVIEW) {
             key = "sv";
+        } else if (mType == EventType.PAGEVIEW) {
+            key = "pg";
         } else if (mType == EventType.ACTION) {
             key = "ac";
         } else if (mType == EventType.IDS) {
@@ -114,6 +91,8 @@ public class Event {
                 mType == EventType.SOCIAL || mType == EventType.TIMING) {
             keys = new String[] { "category", "action", "label", "value" };
         } else if (mType == EventType.SCREENVIEW) {
+            keys = new String[] { "id", "title", "viewId", "url", "referrer" };
+        } else if (mType == EventType.PAGEVIEW) {
             keys = new String[] { "id", "title", "viewId", "url", "referrer" };
         } else if (mType == EventType.ACTION) {
             keys = new String[] { "id", "tax", "discount", "currencyCode", "revenue" };

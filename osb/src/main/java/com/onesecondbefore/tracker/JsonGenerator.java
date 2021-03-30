@@ -1,5 +1,6 @@
 package com.onesecondbefore.tracker;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -38,7 +39,7 @@ final class JsonGenerator {
         public String version = "";
     }
 
-    private Context mContext = null;
+    private Context mContext;
 
     JsonGenerator(Context context) {
         this.mContext = context;
@@ -120,7 +121,7 @@ final class JsonGenerator {
             json.put("cs", 0);
             json.put("is", 0);
             json.put("aid", config.getAccountId());
-            json.put("ns", event.getNamespacesValue());
+            json.put("ns", event.getNamespace());
             json.put("tt", "android-post");
         } catch(Exception e) {
             Log.e(TAG, "getDeviceInfo - " + e.getMessage());
@@ -133,7 +134,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             String product =  Build.PRODUCT;
-            Boolean isEmulator = product.equals("sdk") || product.contains("_sdk") || product.contains("sdk_");
+            boolean isEmulator = product.equals("sdk") || product.contains("_sdk") || product.contains("sdk_");
 
             Point size = this.getWindowSize();
             AppInfo info = this.getAppInfo();
@@ -146,8 +147,8 @@ final class JsonGenerator {
             json.put("sh", size.y);
             json.put("tz", this.getTimeZoneOffset());
             json.put("lang", this.getLanguage());
-            json.put("ifda", this.getAdvertisingClientId());
-            json.put("ifdv", this.getUniqueId());
+            json.put("idfa", this.getAdvertisingClientId());
+            json.put("idfv", this.getUniqueId());
             json.put("an", info.name);
             json.put("av", info.version);
             json.put("conn", this.getNetworkType());
@@ -206,11 +207,11 @@ final class JsonGenerator {
         return locale.getLanguage() + "_" + locale.getCountry();
     }
 
+    @SuppressLint("HardwareIds")
     private String getUniqueId() {
         return Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
-    @SuppressWarnings("MissingPermission")
     private String getNetworkType() {
         String type = "offline";
         try {
@@ -239,7 +240,6 @@ final class JsonGenerator {
         try {
             AdvertisingIdClient.Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
             clientId = adInfo != null ? adInfo.getId() : null;
-
         } catch (Exception e) {
             Log.e(TAG, "getAdvertisingClientId - " + e.getMessage());
         }
@@ -251,7 +251,6 @@ final class JsonGenerator {
         long usedMem = 0;
         try {
             StatFs stat = new StatFs(Environment.getRootDirectory().getPath());
-            long bytesAvailable;
             if(Build.VERSION.SDK_INT >= 18){
                 long totalMem = (stat. getBlockCountLong() * stat.getBlockSizeLong());
                 long freeMem = (stat. getAvailableBlocksLong() * stat.getBlockSizeLong());

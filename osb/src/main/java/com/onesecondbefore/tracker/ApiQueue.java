@@ -34,7 +34,7 @@ class ApiTask {
 
 class ApiQueue {
     private static final String TAG = "OSB:Queue";
-    private LinkedList<ApiTask> mQueue = new LinkedList<ApiTask>();
+    private LinkedList<ApiTask> mQueue = new LinkedList<>();
     private boolean mIsEnabled = true;
     private Context mContext;
 
@@ -42,7 +42,7 @@ class ApiQueue {
         mContext = context;
     }
 
-    public void destory() {
+    public void destroy() {
         mQueue.clear();
     }
 
@@ -89,15 +89,15 @@ class ApiQueue {
             InputStream in = httpURLConnection.getInputStream();
             InputStreamReader inputStreamReader = new InputStreamReader(in);
 
-            String response = "";
+            StringBuilder response = new StringBuilder();
             int inputStreamData = inputStreamReader.read();
             while (inputStreamData != -1) {
                 char current = (char) inputStreamData;
                 inputStreamData = inputStreamReader.read();
-                response += current;
+                response.append(current);
             }
 
-            Log.i(TAG, "Got Response: " + response);
+            Log.i(TAG, "Got Response: " + response.toString());
         } catch (Exception e) {
             Log.e(TAG, "sendPostRequest - " + e.getMessage());
         }  finally {
@@ -114,10 +114,10 @@ class ApiQueue {
         try {
             ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo info = cm.getActiveNetworkInfo();
-            if (info == null && !info.isConnected()) {
+            if (info != null && info.isConnected()) {
                 if (info.getType() == ConnectivityManager.TYPE_WIFI ||
                         info.getType() == ConnectivityManager.TYPE_MOBILE) {
-                    isOffline = false;;
+                    isOffline = false;
                 }
             }
         } catch (Exception e) {

@@ -1,7 +1,5 @@
 package com.onesecondbefore.tracker.demo;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,8 +7,11 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Switch;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
+
 import com.onesecondbefore.tracker.EventType;
-import com.onesecondbefore.tracker.Osb;
+import com.onesecondbefore.tracker.OSB;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -20,9 +21,9 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText mEditType;
     private EditText mEditAction;
-    private EditText mEditClientId;
+    private EditText mEditAccountId;
     private EditText mEditServerUrl;
-    private Switch mSwitchLocation;
+    private SwitchCompat mSwitchLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,20 +34,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendEvent(View view) {
-        String clientId = mEditClientId.getText().toString();
-        if (clientId == null || clientId.isEmpty()) {
-            clientId = "ios_sdk-defdf0691b47bea99f6d7db2ce2b6b83a9fbd53a";
+        String accountId = mEditAccountId.getText().toString();
+        if (accountId == null || accountId.isEmpty()) {
+            accountId = "development";
         }
 
         String serverUrl = mEditServerUrl.getText().toString();
         if (serverUrl == null || serverUrl.isEmpty()) {
-            serverUrl = "https://enbxr4mb0mcla.x.pipedream.net";
+            serverUrl = "https://c.onesecondbefore.com";
         }
 
-        Log.i(TAG, "ClientId = " + clientId);
-        Log.i(TAG, "serverUrl = " + serverUrl);
+        Log.i(TAG, "AccountId = " + accountId);
+        Log.i(TAG, "ServerUrl = " + serverUrl);
 
-        Osb.getInstance().initialize(this, clientId,serverUrl);
+        OSB osb = OSB.getInstance(this);
+        osb.initialize(accountId, serverUrl);
 
         String type = mEditType.getText().toString();
         String action = mEditAction.getText().toString();
@@ -62,12 +64,10 @@ public class MainActivity extends AppCompatActivity {
             if (action.isEmpty()) {
                 showActionError();
             } else {
-                Osb.getInstance().sendEvent(EventType.ACTION, action, eventData,
-                        null);
+                osb.sendEvent(EventType.ACTION, action, eventData);
             }
         } else {
-            String[] trackIdentifiers = new String[] { "trackerFromView" };
-            Osb.getInstance().sendEvent(eventType, action, eventData, trackIdentifiers);
+            osb.sendEvent(eventType, action, eventData);
         }
     }
 
@@ -75,9 +75,9 @@ public class MainActivity extends AppCompatActivity {
     private void initializeFields() {
         mEditType = (EditText)findViewById(R.id.editType);
         mEditAction = (EditText)findViewById(R.id.editAction);
-        mEditClientId = (EditText)findViewById(R.id.editClientId);
+        mEditAccountId = (EditText)findViewById(R.id.editAccountId);
         mEditServerUrl = (EditText)findViewById(R.id.editServerUrl);
-        mSwitchLocation = (Switch)findViewById(R.id.switchLocation);
+        mSwitchLocation = (SwitchCompat)findViewById(R.id.switchLocation);
     }
 
     private void showActionError() {
@@ -92,6 +92,8 @@ public class MainActivity extends AppCompatActivity {
             eventType = EventType.IDS;
         } else if (type.equalsIgnoreCase("screenview")) {
             eventType = EventType.SCREENVIEW;
+        } else if (type.equalsIgnoreCase("pageview")) {
+            eventType = EventType.PAGEVIEW;
         } else if (type.equalsIgnoreCase("action")) {
             eventType = EventType.ACTION;
         } else if (type.equalsIgnoreCase("exception")) {

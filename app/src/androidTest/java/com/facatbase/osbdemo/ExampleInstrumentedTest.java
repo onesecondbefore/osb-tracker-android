@@ -22,6 +22,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("com.facatbase.osbdemo", appContext.getPackageName());
+        assertEquals("com.factbase.osbdemo", appContext.getPackageName());
     }
 }
