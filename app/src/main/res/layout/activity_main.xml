@@ -134,7 +134,7 @@
             android:text="Request location"
             android:textSize="20sp"
             />
-        <SwitchCompat
+        <Switch
             android:id="@+id/switchLocation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

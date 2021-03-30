@@ -8,7 +8,6 @@ import android.widget.EditText;
 import android.widget.Switch;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
 
 import com.onesecondbefore.tracker.EventType;
 import com.onesecondbefore.tracker.OSB;
@@ -23,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText mEditAction;
     private EditText mEditAccountId;
     private EditText mEditServerUrl;
-    private SwitchCompat mSwitchLocation;
+    private Switch mSwitchLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         mEditAction = (EditText)findViewById(R.id.editAction);
         mEditAccountId = (EditText)findViewById(R.id.editAccountId);
         mEditServerUrl = (EditText)findViewById(R.id.editServerUrl);
-        mSwitchLocation = (SwitchCompat)findViewById(R.id.switchLocation);
+        mSwitchLocation = (Switch)findViewById(R.id.switchLocation);
     }
 
     private void showActionError() {

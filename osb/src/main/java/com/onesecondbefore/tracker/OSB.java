@@ -2,6 +2,8 @@ package com.onesecondbefore.tracker;
 
 import android.content.Context;
 import android.util.Log;
+import android.webkit.WebSettings;
+
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
@@ -19,6 +21,8 @@ public final class OSB implements LifecycleObserver {
     private ApiQueue mQueue = null;
     private Context mContext;
 
+    public static String userAgent = null;
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -30,6 +34,7 @@ public final class OSB implements LifecycleObserver {
         if (mInstance == null) {
             mInstance = new OSB();
             mInstance.mContext = context;
+            userAgent = WebSettings.getDefaultUserAgent(context);
         }
         return mInstance;
     }
