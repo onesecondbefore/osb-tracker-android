@@ -96,8 +96,8 @@ class ApiQueue {
             int inputStreamData = inputStreamReader.read();
             while (inputStreamData != -1) {
                 char current = (char) inputStreamData;
-                inputStreamData = inputStreamReader.read();
                 response.append(current);
+                inputStreamData = inputStreamReader.read();
             }
 
             Log.i(TAG, "Got Response: " + response.toString());
@@ -113,20 +113,20 @@ class ApiQueue {
     }
 
     private boolean isNetworkConnected() {
-        boolean isOffline = true;
+        boolean isOnline = false;
         try {
             ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo info = cm.getActiveNetworkInfo();
             if (info != null && info.isConnected()) {
                 if (info.getType() == ConnectivityManager.TYPE_WIFI ||
                         info.getType() == ConnectivityManager.TYPE_MOBILE) {
-                    isOffline = false;
+                    isOnline = true;
                 }
             }
         } catch (Exception e) {
             Log.e(TAG, "isNetworkConnected - " + e.getMessage());
         }
 
-        return isOffline;
+        return isOnline;
     }
 }
