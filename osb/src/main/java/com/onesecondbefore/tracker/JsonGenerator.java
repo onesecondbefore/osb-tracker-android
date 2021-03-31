@@ -25,18 +25,17 @@ import org.json.JSONObject;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Dictionary;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 final class JsonGenerator {
     private static final String TAG = "OSB:Json";
 
     private class AppInfo {
-        public String name = "";
-        public String version = "";
+        public String name = null;
+        public String version = null;
     }
 
     private Context mContext;
@@ -79,21 +78,20 @@ final class JsonGenerator {
         String hitsType = event.getTypeDataKey();
         String[] defaultEventKeys = event.getDefaultEventKeys();
         List<String> defaultEventList = Arrays.asList(defaultEventKeys);
-        Dictionary<String, Object> data = event.getData();
+        Map<String, Object> data = event.getData();
         JSONObject hitsData = new JSONObject();
         JSONObject customData = new JSONObject();
 
         try {
             if (data != null) {
-                Enumeration<String> keys = data.keys();
-                while(keys.hasMoreElements()) {
-                    String key = keys.nextElement();
-                    Object val = data.get(key);
+                for (Map.Entry<String, Object> entry:  data.entrySet()) {
+                    String key = entry.getKey();
+                    Object value = entry.getValue();
 
                     if (defaultEventList.contains(key)) {
-                        hitsData.put(key, val);
+                        hitsData.put(key, value);
                     } else {
-                        customData.put(key, val);
+                        customData.put(key, value);
                     }
                 }
             }
@@ -117,7 +115,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", this.getCurrentTimestamp());
-            json.put("tv", "5.0.0");
+            json.put("tv", "5.0.0." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", 0);
             json.put("aid", config.getAccountId());

@@ -1,18 +1,18 @@
 package com.onesecondbefore.tracker;
 
-import java.util.Dictionary;
+import java.util.Map;
 import java.util.Hashtable;
 
 public class Event {
     private EventType mType = EventType.EVENT;
     private String mNamespace = "default";
-    private Dictionary<String, Object> mData = new Hashtable<>();
+    private Map<String, Object> mData = new Hashtable<>();
     private String mSubType = "";
     private boolean mIsGpsEnabled = false;
     private double mLatitude = 0;
     private double mLongitude = 0;
 
-    Event(EventType type, String subType, Dictionary<String, Object> data,
+    Event(EventType type, String subType, Map<String, Object> data,
           boolean isGpsEnabled, double latitude, double longitude) {
         mType = type;
         mSubType = subType != null ? subType : "";
@@ -91,7 +91,7 @@ public class Event {
                 mType == EventType.SOCIAL || mType == EventType.TIMING) {
             keys = new String[] { "category", "action", "label", "value" };
         } else if (mType == EventType.SCREENVIEW) {
-            keys = new String[] { "id", "title", "viewId", "url", "referrer" };
+            keys = new String[] { "id", "name" };
         } else if (mType == EventType.PAGEVIEW) {
             keys = new String[] { "id", "title", "viewId", "url", "referrer" };
         } else if (mType == EventType.ACTION) {
@@ -103,7 +103,7 @@ public class Event {
         return keys;
     }
 
-    public Dictionary<String, Object> getData() {
+    public Map<String, Object> getData() {
         return mData;
     }
 

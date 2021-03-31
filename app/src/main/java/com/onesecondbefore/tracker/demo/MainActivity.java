@@ -13,7 +13,9 @@ import com.onesecondbefore.tracker.EventType;
 import com.onesecondbefore.tracker.OSB;
 
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "OSB:Demo";
@@ -57,16 +59,22 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "action = " + action);
         Log.i(TAG, "eventType = " + eventType);
 
-        Dictionary<String, Object> eventData = getEventData(type);
+        try {
+            Map<String, Object> eventData = getEventData(EventType.valueOf(type.toUpperCase()));
 
-        if (eventType == EventType.ACTION) {
-            if (action.isEmpty()) {
-                showActionError();
-            } else {
-                osb.sendEvent(EventType.ACTION, action, eventData);
+            if (eventType == EventType.ACTION) {
+                if (action.isEmpty()) {
+                    showActionError();
+                } else {
+                    osb.send(EventType.ACTION, action, eventData);
+                }
+            } else if (eventType == EventType.PAGEVIEW) {
+                osb.sendPageView("/homepage", "Homepage", null, eventData);
+            } else if (eventType == EventType.SCREENVIEW) {
+                osb.sendScreenView("Homepage", eventData);
             }
-        } else {
-            osb.sendEvent(eventType, action, eventData);
+        } catch (IllegalArgumentException ex) {
+            showEventTypeError();
         }
     }
 
@@ -82,6 +90,12 @@ public class MainActivity extends AppCompatActivity {
     private void showActionError() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Enter a valid action");
+        builder.show();
+    }
+
+    private void showEventTypeError() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Invalid event type");
         builder.show();
     }
 
@@ -106,38 +120,38 @@ public class MainActivity extends AppCompatActivity {
         return eventType;
     }
 
-    private Dictionary<String, Object> getEventData(String type) {
-        Hashtable<String, Object> eventData = new Hashtable<>();
-        if (type.equalsIgnoreCase("ids")) {
+    private Map<String, Object> getEventData(EventType type) {
+        Map<String, Object> eventData = new HashMap<>();
+        if (type == EventType.IDS) {
             eventData.put("key", "login");
             eventData.put("value", "demouser@OSB.com");
             eventData.put("label", "single sign-on");
             eventData.put("is-signed-user", true);
             eventData.put("password", "OSBdemo123");
-        } else if (type.equalsIgnoreCase("screenview")) {
+        } else if (type == EventType.SCREENVIEW) {
             eventData.put("id", "ink001");
             eventData.put("title", "Welcome to the profileScreen");
-        }  else if (type.equalsIgnoreCase( "event")) {
+        }  else if (type == EventType.EVENT) {
             eventData.put("category", "category1");
             eventData.put("action", "action1");
             eventData.put("value", 30.0);
             eventData.put("extra_item", true);
             eventData.put("video_finished", false);
-        } else if (type.equalsIgnoreCase("action")) {
+        } else if (type == EventType.ACTION) {
             eventData.put("id", "ink001");
             eventData.put("revenue", 29.20);
             eventData.put("shipping", 3.50);
             eventData.put("coupon", "ABC123");
-        }  else if (type.equalsIgnoreCase("exception")) {
+        }  else if (type == EventType.EXCEPTION) {
             eventData.put("category", "JS Error");
             eventData.put("label", "ReferenceError: bla is not defined");
             eventData.put("userId", "test@demo.com");
-        } else if (type.equalsIgnoreCase("social")) {
+        } else if (type == EventType.SOCIAL) {
             eventData.put("category", "Facebook");
             eventData.put("action", "like");
             eventData.put("label", "http://foo.com");
             eventData.put("addComment", true);
-        } else if (type.equalsIgnoreCase("timing")) {
+        } else if (type == EventType.TIMING) {
             eventData.put("category", "Page load");
             eventData.put("action", "onDomLoad");
             eventData.put("value", 30);

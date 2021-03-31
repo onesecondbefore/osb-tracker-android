@@ -10,7 +10,10 @@ import androidx.lifecycle.OnLifecycleEvent;
 
 import org.json.JSONObject;
 
-import java.util.Dictionary;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public final class OSB implements LifecycleObserver {
     private static final String TAG = "OSB:Api";
@@ -22,6 +25,7 @@ public final class OSB implements LifecycleObserver {
     private Context mContext;
 
     public static String userAgent = null;
+    public static String viewId = calculateViewId();
 
     @Override
     protected void finalize() throws Throwable {
@@ -33,7 +37,7 @@ public final class OSB implements LifecycleObserver {
     public static OSB getInstance(Context context) {
         if (mInstance == null) {
             mInstance = new OSB();
-            mInstance.mContext = context;
+            mInstance.mContext = context.getApplicationContext();
             userAgent = WebSettings.getDefaultUserAgent(context);
         }
         return mInstance;
@@ -72,16 +76,44 @@ public final class OSB implements LifecycleObserver {
         mConfig.setDebug(isEnabled);
     }
 
-    public void sendEvent(EventType type) {
-        sendEventToQueue(type, "", null);
+    public void sendPageView(String url, String title, String referrer) {
+        sendPageView(url, title, referrer, null);
     }
 
-    public void sendEvent(EventType type, Dictionary<String, Object> data) {
-        sendEventToQueue(type, "", data);
+    public void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
+        if (data == null) {
+            data = new HashMap<>();
+        }
+        data.put("url", url);
+        data.put("ttl", title);
+        data.put("ref", referrer);
+        data.put("vid", viewId);
+        send(EventType.PAGEVIEW, null, data);
     }
 
-    public void sendEvent(EventType type, String actionType,
-                          Dictionary<String, Object> data) {
+    public void sendScreenView(String screenName) {
+        sendScreenView(screenName, null);
+    }
+
+    public void sendScreenView(String screenName, Map<String, Object> data) {
+        if (data == null) {
+            data = new HashMap<>();
+        }
+        data.put("sn", screenName);
+        data.put("vid", viewId);
+        send(EventType.SCREENVIEW, null, data);
+    }
+
+    public void send(EventType type) {
+        sendEventToQueue(type, null, null);
+    }
+
+    public void send(EventType type, Map<String, Object> data) {
+        sendEventToQueue(type, null, data);
+    }
+
+    public void send(EventType type, String actionType,
+                          Map<String, Object> data) {
         sendEventToQueue(type, actionType, data);
     }
 
@@ -117,7 +149,7 @@ public final class OSB implements LifecycleObserver {
     }
 
     private void sendEventToQueue(EventType type, String actionType,
-                                  Dictionary<String, Object> data) {
+                                  Map<String, Object> data) {
         if (mQueue != null) {
             this.startGpsTracker();
 
@@ -133,5 +165,9 @@ public final class OSB implements LifecycleObserver {
 
             t.start();
         }
+    }
+
+    private static String calculateViewId() {
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }
