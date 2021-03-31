@@ -1,26 +1,21 @@
 package com.onesecondbefore.tracker;
 
 public class Config {
-    private String mAccountId = "";
-    private String mServerUrl = "";
-    private String mSiteId = "";
-    private String mDomain = "";
+    private String mAccountId = "development";
+    private String mServerUrl = "https://g.ab21.xyz";
+    private String mSiteId = null;
     private boolean mIsDebug = false;
 
     public void setAccountId(String accountId) {
-        this.mAccountId = accountId != null ? accountId : "";
+        this.mAccountId = accountId;
     }
 
     public void setServerUrl(String serverUrl) {
-        this.mServerUrl = serverUrl != null ? serverUrl : "";
+        this.mServerUrl = serverUrl;
     }
 
     public void setSiteId(String siteId) {
-        this.mSiteId = siteId != null ? siteId : "";
-    }
-
-    public void setDomain(String domain) {
-        this.mDomain = domain != null ? domain : "";
+        this.mSiteId = siteId;
     }
 
     public void setDebug(boolean isDebug) {
@@ -29,10 +24,6 @@ public class Config {
 
     public String getAccountId() {
         return mAccountId;
-    }
-
-    public String getDomain() {
-        return mDomain;
     }
 
     public String getServerUrl() {

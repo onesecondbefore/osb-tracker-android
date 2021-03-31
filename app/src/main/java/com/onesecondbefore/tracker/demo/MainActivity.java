@@ -12,9 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.onesecondbefore.tracker.EventType;
 import com.onesecondbefore.tracker.OSB;
 
-import java.util.Dictionary;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -48,8 +46,8 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "AccountId = " + accountId);
         Log.i(TAG, "ServerUrl = " + serverUrl);
 
-        OSB osb = OSB.getInstance(this);
-        osb.initialize(accountId, serverUrl);
+        OSB osb = OSB.initialize(this);
+        osb.create(accountId, serverUrl);
 
         String type = mEditType.getText().toString();
         String action = mEditAction.getText().toString();
@@ -66,12 +64,12 @@ public class MainActivity extends AppCompatActivity {
                 if (action.isEmpty()) {
                     showActionError();
                 } else {
-                    osb.send(EventType.ACTION, action, eventData);
+                    OSB.send(EventType.ACTION, action, eventData);
                 }
             } else if (eventType == EventType.PAGEVIEW) {
-                osb.sendPageView("/homepage", "Homepage", null, eventData);
+                OSB.sendPageView("/homepage", "Homepage", null, eventData);
             } else if (eventType == EventType.SCREENVIEW) {
-                osb.sendScreenView("Homepage", eventData);
+                OSB.sendScreenView("Homepage", eventData);
             }
         } catch (IllegalArgumentException ex) {
             showEventTypeError();
@@ -80,11 +78,11 @@ public class MainActivity extends AppCompatActivity {
 
     /* Private Functions */
     private void initializeFields() {
-        mEditType = (EditText)findViewById(R.id.editType);
-        mEditAction = (EditText)findViewById(R.id.editAction);
-        mEditAccountId = (EditText)findViewById(R.id.editAccountId);
-        mEditServerUrl = (EditText)findViewById(R.id.editServerUrl);
-        mSwitchLocation = (Switch)findViewById(R.id.switchLocation);
+        mEditType = findViewById(R.id.editType);
+        mEditAction = findViewById(R.id.editAction);
+        mEditAccountId = findViewById(R.id.editAccountId);
+        mEditServerUrl = findViewById(R.id.editServerUrl);
+        mSwitchLocation = findViewById(R.id.switchLocation);
     }
 
     private void showActionError() {

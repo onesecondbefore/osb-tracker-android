@@ -10,7 +10,6 @@ import androidx.lifecycle.OnLifecycleEvent;
 
 import org.json.JSONObject;
 
-import java.util.Map;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -34,7 +33,7 @@ public final class OSB implements LifecycleObserver {
         clear();
     }
 
-    public static OSB getInstance(Context context) {
+    public static OSB initialize(Context context) {
         if (mInstance == null) {
             mInstance = new OSB();
             mInstance.mContext = context.getApplicationContext();
@@ -55,15 +54,14 @@ public final class OSB implements LifecycleObserver {
         }
     }
 
-    public void initialize(String accountId, String url) {
-        initialize(accountId, url, null, null);
+    public void create(String accountId, String url) {
+        create(accountId, url, null);
     }
 
-    public void initialize(String accountId, String url, String siteId, String domain) {
+    public void create(String accountId, String url, String siteId) {
         mConfig.setAccountId(accountId);
         mConfig.setServerUrl(url);
         mConfig.setSiteId(siteId);
-        mConfig.setDomain(domain);
 
         clear();
         mQueue = new ApiQueue(mContext);
@@ -76,11 +74,15 @@ public final class OSB implements LifecycleObserver {
         mConfig.setDebug(isEnabled);
     }
 
+    public void sendPageView(String url, String title) {
+        sendPageView(url, title, null, null);
+    }
+
     public void sendPageView(String url, String title, String referrer) {
         sendPageView(url, title, referrer, null);
     }
 
-    public void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
+    public static void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
         if (data == null) {
             data = new HashMap<>();
         }
@@ -91,11 +93,11 @@ public final class OSB implements LifecycleObserver {
         send(EventType.PAGEVIEW, null, data);
     }
 
-    public void sendScreenView(String screenName) {
+    public static void sendScreenView(String screenName) {
         sendScreenView(screenName, null);
     }
 
-    public void sendScreenView(String screenName, Map<String, Object> data) {
+    public static void sendScreenView(String screenName, Map<String, Object> data) {
         if (data == null) {
             data = new HashMap<>();
         }
@@ -104,17 +106,57 @@ public final class OSB implements LifecycleObserver {
         send(EventType.SCREENVIEW, null, data);
     }
 
-    public void send(EventType type) {
-        sendEventToQueue(type, null, null);
+    public static void sendEvent(String category) {
+        sendEvent(category, null, null, null, null);
     }
 
-    public void send(EventType type, Map<String, Object> data) {
-        sendEventToQueue(type, null, data);
+    public static void sendEvent(String category, String action) {
+        sendEvent(category, action, null, null, null);
     }
 
-    public void send(EventType type, String actionType,
+    public static void sendEvent(String category, String action, String label) {
+        sendEvent(category, action, label, null, null);
+    }
+
+    public static void sendEvent(String category, String action, String label, String value) {
+        sendEvent(category, action, label, value, null);
+    }
+
+    public static void sendEvent(String category, String action, String label, String value, Map<String, Object> data) {
+        if (data == null) {
+            data = new HashMap<>();
+        }
+        if (category != null) {
+            data.put("category", category);
+        }
+        if (action != null) {
+            data.put("action", action);
+        }
+        if (label != null) {
+            data.put("label", label);
+        }
+        if (value != null) {
+            data.put("value", value);
+        }
+        send(EventType.EVENT, null, data);
+    }
+
+    public static void send(EventType type) {
+        send(type, null, null);
+    }
+
+    public static void send(EventType type, Map<String, Object> data) {
+        send(type, null, data);
+    }
+
+    public static void send(EventType type, String actionType,
                           Map<String, Object> data) {
-        sendEventToQueue(type, actionType, data);
+        if (mInstance != null) {
+            mInstance.sendEventToQueue(type, actionType, data);
+        } else {
+            throw new IllegalArgumentException("Initialize OSB Tracker first with OSB osb = OSB.initialize(this); osb.create(\"...\");");
+        }
+
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
