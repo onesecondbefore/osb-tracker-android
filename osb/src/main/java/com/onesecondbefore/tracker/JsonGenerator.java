@@ -138,7 +138,7 @@ final class JsonGenerator {
             AppInfo info = this.getAppInfo();
 
             json.put("os", "Android");
-            json.put("os", Build.VERSION.RELEASE);
+            json.put("ov", Build.VERSION.RELEASE);
             json.put("brand", Build.BRAND);
             json.put("model", isEmulator ? "Emulator" : Build.MODEL);
             json.put("sw", size.x);
