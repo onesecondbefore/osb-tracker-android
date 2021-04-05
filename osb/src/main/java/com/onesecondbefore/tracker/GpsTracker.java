@@ -124,7 +124,7 @@ class GpsTracker implements LocationListener {
      * */
     public void stopTracker() {
         if(locationManager != null){
-            locationManager.removeUpdates(GpsTracker.this);
+            locationManager.removeUpdates(this);
             locationManager = null;
             Log.d(TAG, "Stopped");
         }
@@ -134,24 +134,14 @@ class GpsTracker implements LocationListener {
      * Function to get latitude
      * */
     public double getLatitude(){
-        if(location != null){
-            latitude = location.getLatitude();
-        }
-
-        // return latitude
-        return latitude;
+        return location != null ? location.getLatitude() : 0;
     }
 
     /**
      * Function to get longitude
      * */
     public double getLongitude(){
-        if(location != null){
-            longitude = location.getLongitude();
-        }
-
-        // return longitude
-        return longitude;
+        return location != null ? location.getLongitude() : 0;
     }
 
     /**

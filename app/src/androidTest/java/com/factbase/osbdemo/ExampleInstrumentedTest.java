@@ -1,4 +1,4 @@
-package com.facatbase.osbdemo;
+package com.factbase.osbdemo;
 
 import android.content.Context;
 

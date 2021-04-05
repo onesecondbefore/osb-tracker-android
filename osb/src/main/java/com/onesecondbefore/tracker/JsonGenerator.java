@@ -1,7 +1,6 @@
 package com.onesecondbefore.tracker;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -20,12 +19,10 @@ import android.view.WindowManager;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -61,7 +58,7 @@ final class JsonGenerator {
             eventJson.put("sy", sysInfoJson);
             eventJson.put("dv", deviceInfoJson);
             eventJson.accumulate("hits", hits);
-        } catch(Exception e) {
+        } catch (JSONException e) {
             Log.e(TAG, "generate - " + e.getMessage());
         }
 
@@ -74,37 +71,16 @@ final class JsonGenerator {
     private JSONObject getHitsInfo(Event event) {
         JSONObject json = new JSONObject();
 
-        String type = event.getTypeData();
-        String hitsType = event.getTypeDataKey();
-        String[] defaultEventKeys = event.getDefaultEventKeys();
-        List<String> defaultEventList = Arrays.asList(defaultEventKeys);
-        Map<String, Object> data = event.getData();
-        JSONObject hitsData = new JSONObject();
-        JSONObject customData = new JSONObject();
-
         try {
-            if (data != null) {
-                for (Map.Entry<String, Object> entry:  data.entrySet()) {
-                    String key = entry.getKey();
-                    Object value = entry.getValue();
+            for (Map.Entry<String, Object> entry: event.getData().entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
 
-                    if (defaultEventList.contains(key)) {
-                        hitsData.put(key, value);
-                    } else {
-                        customData.put(key, value);
-                    }
-                }
+                json.put(key, value);
             }
-        } catch(Exception e) {
-            Log.e(TAG, "getHitsInfo - " + e.getMessage());
-        }
-
-        try {
-            json.put("tp", type);
-            json.put(hitsType, hitsData);
-            json.put("dt", customData);
-            json.put("ht", getCurrentTimestamp());
-        } catch(Exception e) {
+            json.put("tp", event.getTypeData());
+            json.put("ht", System.currentTimeMillis());
+        } catch (JSONException e) {
             Log.e(TAG, "getHitsInfo - " + e.getMessage());
         }
 
@@ -114,15 +90,15 @@ final class JsonGenerator {
     private JSONObject getSystemInfo(Config config, Event event) {
         JSONObject json = new JSONObject();
         try {
-            json.put("st", this.getCurrentTimestamp());
+            json.put("st", System.currentTimeMillis());
             json.put("tv", "5.0.0." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", 0);
             json.put("aid", config.getAccountId());
             json.put("ns", event.getNamespace());
             json.put("tt", "android-post");
-        } catch(Exception e) {
-            Log.e(TAG, "getDeviceInfo - " + e.getMessage());
+        } catch (JSONException e) {
+            Log.e(TAG, "getSystemInfo - " + e.getMessage());
         }
 
         return json;
@@ -131,8 +107,8 @@ final class JsonGenerator {
     private JSONObject getDeviceInfo(Event event) {
         JSONObject json = new JSONObject();
         try {
-            String product =  Build.PRODUCT;
-            boolean isEmulator = product.equals("sdk") || product.contains("_sdk") || product.contains("sdk_");
+            String product = Build.PRODUCT;
+            boolean isEmulator = product.equals("sdk");
 
             Point size = this.getWindowSize();
             AppInfo info = this.getAppInfo();
@@ -158,7 +134,7 @@ final class JsonGenerator {
                 geoJson.put("longitude", event.getLongitude());
                 json.put("geo", geoJson);
             }
-        } catch(Exception e) {
+        } catch (JSONException e) {
             Log.e(TAG, "getDeviceInfo - " + e.getMessage());
         }
 
@@ -188,11 +164,6 @@ final class JsonGenerator {
         }
 
         return info;
-    }
-
-    private long getCurrentTimestamp() {
-        Date date= new Date();
-        return date.getTime();
     }
 
     private int getTimeZoneOffset() {
@@ -271,20 +242,15 @@ final class JsonGenerator {
     }
 
     public String convertBytesToString(long totalBytes) {
-        String[] simbols = new String[] {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
+        String[] symbols = new String[] {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
         long scale = 1L;
-        for (String simbol : simbols) {
+        for (String symbol : symbols) {
             if (totalBytes < (scale * 1024L)) {
                 return String.format("%s %s", new DecimalFormat("#.##").
-                        format((double)totalBytes / scale), simbol);
+                        format((double)totalBytes / scale), symbol);
             }
             scale *= 1024L;
         }
-        return "-1 B";
-    }
-
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    private long getAvailableBytes(StatFs stat) {
-        return stat.getBlockSizeLong() * stat.getAvailableBlocksLong();
+        return "0 B";
     }
 }
