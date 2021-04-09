@@ -1,5 +1,11 @@
 apply plugin: 'com.android.application'
 
+repositories {
+    maven {
+        url "https://www.onesecondbefore.com/repository"
+    }
+}
+
 android {
     compileSdkVersion 30
     buildToolsVersion '30.0.3'
@@ -31,5 +37,6 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+//    implementation 'com.onesecondbefore.tracker:tracker-android:1.0.0'
     implementation project(path: ':osb')
 }

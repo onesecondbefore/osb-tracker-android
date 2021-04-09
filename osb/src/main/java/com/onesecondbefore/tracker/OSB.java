@@ -23,8 +23,12 @@ public final class OSB implements LifecycleObserver {
     private ApiQueue mQueue = null;
     private Context mContext;
 
-    public static String userAgent = null;
-    public static String viewId = calculateViewId();
+    protected static String userAgent = null;
+    protected static String viewId = calculateViewId();
+
+    public enum EventType {
+        IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING
+    }
 
     @Override
     protected void finalize() throws Throwable {
@@ -190,7 +194,7 @@ public final class OSB implements LifecycleObserver {
         mGpsTracker.startTracker();
     }
 
-    private void sendEventToQueue(EventType type, String actionType,
+    private void sendEventToQueue(OSB.EventType type, String actionType,
                                   Map<String, Object> data) {
         if (mQueue != null) {
             this.startGpsTracker();

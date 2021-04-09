@@ -14,22 +14,22 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles 'consumer-rules.pro'
+//        consumerProguardFiles 'consumer-rules.pro'
 
         buildConfigField "String", "gitCommitIdAbbrev", "\"${gitCommitIdAbbrev}\""
     }
 
     buildTypes {
         release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+//            minifyEnabled true
+//            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    //implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
@@ -50,11 +50,19 @@ publishing {
             version '1.0.0'
             artifactId 'tracker-android'
             artifact("$buildDir/outputs/aar/osb-release.aar")
-        }
-    }
-    repositories {
-        maven {
-            url "https://github.com/onesecondbefore/osb-tracker-android"
+
+            description 'OSB Tracker for Android'
+            pom.packaging 'aar'
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+                configurations.implementation.allDependencies.each {
+                    println "dependency=$it"
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+            }
         }
     }
 }
