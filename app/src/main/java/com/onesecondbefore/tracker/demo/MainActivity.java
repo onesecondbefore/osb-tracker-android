@@ -45,8 +45,18 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "AccountId = " + accountId);
         Log.i(TAG, "ServerUrl = " + serverUrl);
 
-        OSB osb = OSB.initialize(this);
-        osb.create(accountId, serverUrl);
+        OSB osb = OSB.getInstance();
+        osb.create(this, accountId, serverUrl);
+
+        HashMap<String, String> extraData = new HashMap<>();
+        extraData.put("extra1", "value1");
+        extraData.put("extra2", "value2");
+        osb.set("extra", extraData);
+
+        HashMap<String, String> hitsData = new HashMap<>();
+        hitsData.put("hit1", "value1");
+        hitsData.put("hit2", "value2");
+        osb.set(hitsData);
 
         String type = mEditType.getText().toString();
         String action = mEditAction.getText().toString();
@@ -63,12 +73,12 @@ public class MainActivity extends AppCompatActivity {
                 if (action.isEmpty()) {
                     showActionError();
                 } else {
-                    OSB.send(OSB.EventType.ACTION, action, eventData);
+                    osb.send(OSB.EventType.ACTION, action, eventData);
                 }
             } else if (eventType == OSB.EventType.PAGEVIEW) {
-                OSB.sendPageView("/homepage", "Homepage", null, eventData);
+                osb.sendPageView("/homepage", "Homepage", null, eventData);
             } else if (eventType == OSB.EventType.SCREENVIEW) {
-                OSB.sendScreenView("Homepage", eventData);
+                osb.sendScreenView("Homepage", eventData);
             }
         } catch (IllegalArgumentException ex) {
             showEventTypeError();

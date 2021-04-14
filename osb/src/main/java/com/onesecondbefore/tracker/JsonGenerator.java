@@ -41,7 +41,8 @@ final class JsonGenerator {
         this.mContext = context;
     }
 
-    public JSONObject generate(Config config, Event event) {
+    public JSONObject generate(Config config, Event event, String eventKey,
+                               Map<String, String> eventData, Map<String, String> hitsData) {
         // Get System Info
         JSONObject sysInfoJson = getSystemInfo(config, event);
 
@@ -49,7 +50,7 @@ final class JsonGenerator {
         JSONObject deviceInfoJson = getDeviceInfo(event);
 
         // Get Hits Info
-        JSONObject hitJson = getHitsInfo(event);
+        JSONObject hitJson = getHitsInfo(event, hitsData);
         JSONArray hits = new JSONArray();
         hits.put(hitJson);
 
@@ -58,6 +59,14 @@ final class JsonGenerator {
             eventJson.put("sy", sysInfoJson);
             eventJson.put("dv", deviceInfoJson);
             eventJson.accumulate("hits", hits);
+
+            if (eventKey != null && !eventKey.isEmpty() && eventData != null && eventData.size() > 0) {
+                JSONObject eventDataJson = new JSONObject();
+                for (Map.Entry<String, String> entry: eventData.entrySet()) {
+                    eventDataJson.put(entry.getKey(), entry.getValue());
+                }
+                eventJson.put(eventKey, eventDataJson);
+            }
         } catch (JSONException e) {
             Log.e(TAG, "generate - " + e.getMessage());
         }
@@ -68,7 +77,7 @@ final class JsonGenerator {
 
     /* Private Functions */
 
-    private JSONObject getHitsInfo(Event event) {
+    private JSONObject getHitsInfo(Event event, Map<String, String> hitsData) {
         JSONObject json = new JSONObject();
 
         try {
@@ -80,6 +89,12 @@ final class JsonGenerator {
             }
             json.put("tp", event.getTypeData());
             json.put("ht", System.currentTimeMillis());
+
+            if (hitsData != null && hitsData.size() > 0) {
+                for (Map.Entry<String, String> entry: hitsData.entrySet()) {
+                    json.put(entry.getKey(), entry.getValue());
+                }
+            }
         } catch (JSONException e) {
             Log.e(TAG, "getHitsInfo - " + e.getMessage());
         }

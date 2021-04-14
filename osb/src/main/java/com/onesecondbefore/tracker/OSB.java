@@ -23,8 +23,11 @@ public final class OSB implements LifecycleObserver {
     private ApiQueue mQueue = null;
     private Context mContext;
 
-    protected static String userAgent = null;
-    protected static String viewId = calculateViewId();
+    private boolean mIsInitialized = false;
+    private String mViewId = calculateViewId();
+    private String mEventKey = null;
+    private Map<String, String> mEventData = null;
+    private Map<String, String> mHitsData = null;
 
     public enum EventType {
         IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING
@@ -34,19 +37,25 @@ public final class OSB implements LifecycleObserver {
     protected void finalize() throws Throwable {
         super.finalize();
 
-        clear();
+        if (mInstance != null) {
+            mInstance.clear();
+            mInstance = null;
+        }
     }
 
-    public static OSB initialize(Context context) {
+    public static OSB getInstance() {
         if (mInstance == null) {
             mInstance = new OSB();
-            mInstance.mContext = context.getApplicationContext();
-            userAgent = WebSettings.getDefaultUserAgent(context);
         }
+
         return mInstance;
     }
 
     public void clear() {
+        if (mContext != null) {
+            mContext = null;
+        }
+
         if (mGpsTracker != null) {
             mGpsTracker.stopTracker();
             mGpsTracker = null;
@@ -56,26 +65,40 @@ public final class OSB implements LifecycleObserver {
             mQueue.destroy();
             mQueue = null;
         }
+
+        mIsInitialized = false;
     }
 
-    public void create(String accountId, String url) {
-        create(accountId, url, null);
+    public void create(Context context, String accountId, String url) {
+        create(context, accountId, url, null);
     }
 
-    public void create(String accountId, String url, String siteId) {
+    public void create(Context context, String accountId, String url, String siteId) {
+        clear();
+
+        mContext = context.getApplicationContext();
         mConfig.setAccountId(accountId);
         mConfig.setServerUrl(url);
         mConfig.setSiteId(siteId);
 
-        clear();
         mQueue = new ApiQueue(mContext);
         startGpsTracker();
 
+        mIsInitialized = true;
         Log.i(TAG, "OSB - Initialized");
     }
 
     public void debug(boolean isEnabled) {
         mConfig.setDebug(isEnabled);
+    }
+
+    public void set(String name, Map<String, String> data) {
+        mEventKey = name;
+        mEventData = data;
+    }
+
+    public void set(Map<String, String> data) {
+        mHitsData = data;
     }
 
     public void sendPageView(String url, String title) {
@@ -86,47 +109,47 @@ public final class OSB implements LifecycleObserver {
         sendPageView(url, title, referrer, null);
     }
 
-    public static void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
+    public void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
         if (data == null) {
             data = new HashMap<>();
         }
         data.put("url", url);
         data.put("ttl", title);
         data.put("ref", referrer);
-        data.put("vid", viewId);
+        data.put("vid", mViewId);
         send(EventType.PAGEVIEW, null, data);
     }
 
-    public static void sendScreenView(String screenName) {
+    public void sendScreenView(String screenName) {
         sendScreenView(screenName, null);
     }
 
-    public static void sendScreenView(String screenName, Map<String, Object> data) {
+    public void sendScreenView(String screenName, Map<String, Object> data) {
         if (data == null) {
             data = new HashMap<>();
         }
         data.put("sn", screenName);
-        data.put("vid", viewId);
+        data.put("vid", mViewId);
         send(EventType.SCREENVIEW, null, data);
     }
 
-    public static void sendEvent(String category) {
+    public void sendEvent(String category) {
         sendEvent(category, null, null, null, null);
     }
 
-    public static void sendEvent(String category, String action) {
+    public void sendEvent(String category, String action) {
         sendEvent(category, action, null, null, null);
     }
 
-    public static void sendEvent(String category, String action, String label) {
+    public void sendEvent(String category, String action, String label) {
         sendEvent(category, action, label, null, null);
     }
 
-    public static void sendEvent(String category, String action, String label, String value) {
+    public void sendEvent(String category, String action, String label, String value) {
         sendEvent(category, action, label, value, null);
     }
 
-    public static void sendEvent(String category, String action, String label, String value, Map<String, Object> data) {
+    public void sendEvent(String category, String action, String label, String value, Map<String, Object> data) {
         if (data == null) {
             data = new HashMap<>();
         }
@@ -145,22 +168,21 @@ public final class OSB implements LifecycleObserver {
         send(EventType.EVENT, null, data);
     }
 
-    public static void send(EventType type) {
+    public void send(EventType type) {
         send(type, null, null);
     }
 
-    public static void send(EventType type, Map<String, Object> data) {
+    public void send(EventType type, Map<String, Object> data) {
         send(type, null, data);
     }
 
-    public static void send(EventType type, String actionType,
+    public void send(EventType type, String actionType,
                           Map<String, Object> data) {
-        if (mInstance != null) {
+        if (mIsInitialized) {
             mInstance.sendEventToQueue(type, actionType, data);
         } else {
             throw new IllegalArgumentException("Initialize OSB Tracker first with OSB osb = OSB.initialize(this); osb.create(\"...\");");
         }
-
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
@@ -204,7 +226,8 @@ public final class OSB implements LifecycleObserver {
             Thread t = new Thread(new Runnable() {
                 public void run() {
                     JsonGenerator generator = new JsonGenerator(mContext);
-                    JSONObject jsonData = generator.generate(mConfig, event);
+                    JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData,
+                            mHitsData);
                     mQueue.addToQueue(mConfig.getServerUrl(), jsonData);
                 }
             });
@@ -213,7 +236,7 @@ public final class OSB implements LifecycleObserver {
         }
     }
 
-    private static String calculateViewId() {
+    private String calculateViewId() {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 }

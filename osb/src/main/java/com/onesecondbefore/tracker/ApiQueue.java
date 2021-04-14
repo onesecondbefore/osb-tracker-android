@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
+import android.webkit.WebSettings;
 
 import org.json.JSONObject;
 
@@ -44,9 +45,11 @@ class ApiQueue {
     private LinkedList<ApiTask> mQueue = new LinkedList<>();
     private boolean mIsEnabled = true;
     private Context mContext;
+    private String mUserAgent;
 
     ApiQueue(Context context) {
         mContext = context;
+        mUserAgent = WebSettings.getDefaultUserAgent(context);
     }
 
     public void destroy() {
@@ -88,7 +91,7 @@ class ApiQueue {
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Accept", "application/json")
-                .addHeader("User-Agent", OSB.userAgent)
+                .addHeader("User-Agent", mUserAgent)
                 .post(body)
                 .build();
         try {
