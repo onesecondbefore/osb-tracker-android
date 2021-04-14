@@ -2,7 +2,6 @@ package com.onesecondbefore.tracker;
 
 import android.content.Context;
 import android.util.Log;
-import android.webkit.WebSettings;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
@@ -24,10 +23,10 @@ public final class OSB implements LifecycleObserver {
     private Context mContext;
 
     private boolean mIsInitialized = false;
-    private String mViewId = calculateViewId();
+    private final String mViewId = calculateViewId();
     private String mEventKey = null;
-    private Map<String, String> mEventData = null;
-    private Map<String, String> mHitsData = null;
+    private Map<String, Object> mEventData = null;
+    private Map<String, Object> mHitsData = null;
 
     public enum EventType {
         IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING
@@ -92,12 +91,12 @@ public final class OSB implements LifecycleObserver {
         mConfig.setDebug(isEnabled);
     }
 
-    public void set(String name, Map<String, String> data) {
+    public void set(String name, Map<String, Object> data) {
         mEventKey = name;
         mEventData = data;
     }
 
-    public void set(Map<String, String> data) {
+    public void set(Map<String, Object> data) {
         mHitsData = data;
     }
 

@@ -35,14 +35,14 @@ final class JsonGenerator {
         public String version = null;
     }
 
-    private Context mContext;
+    private final Context mContext;
 
     JsonGenerator(Context context) {
         this.mContext = context;
     }
 
     public JSONObject generate(Config config, Event event, String eventKey,
-                               Map<String, String> eventData, Map<String, String> hitsData) {
+        Map<String, Object> eventData, Map<String, Object> hitsData) {
         // Get System Info
         JSONObject sysInfoJson = getSystemInfo(config, event);
 
@@ -62,7 +62,7 @@ final class JsonGenerator {
 
             if (eventKey != null && !eventKey.isEmpty() && eventData != null && eventData.size() > 0) {
                 JSONObject eventDataJson = new JSONObject();
-                for (Map.Entry<String, String> entry: eventData.entrySet()) {
+                for (Map.Entry<String, Object> entry: eventData.entrySet()) {
                     eventDataJson.put(entry.getKey(), entry.getValue());
                 }
                 eventJson.put(eventKey, eventDataJson);
@@ -77,7 +77,7 @@ final class JsonGenerator {
 
     /* Private Functions */
 
-    private JSONObject getHitsInfo(Event event, Map<String, String> hitsData) {
+    private JSONObject getHitsInfo(Event event, Map<String, Object> hitsData) {
         JSONObject json = new JSONObject();
 
         try {
@@ -91,7 +91,7 @@ final class JsonGenerator {
             json.put("ht", System.currentTimeMillis());
 
             if (hitsData != null && hitsData.size() > 0) {
-                for (Map.Entry<String, String> entry: hitsData.entrySet()) {
+                for (Map.Entry<String, Object> entry: hitsData.entrySet()) {
                     json.put(entry.getKey(), entry.getValue());
                 }
             }

@@ -48,12 +48,12 @@ public class MainActivity extends AppCompatActivity {
         OSB osb = OSB.getInstance();
         osb.create(this, accountId, serverUrl);
 
-        HashMap<String, String> extraData = new HashMap<>();
+        HashMap<String, Object> extraData = new HashMap<>();
         extraData.put("extra1", "value1");
         extraData.put("extra2", "value2");
         osb.set("extra", extraData);
 
-        HashMap<String, String> hitsData = new HashMap<>();
+        HashMap<String, Object> hitsData = new HashMap<>();
         hitsData.put("hit1", "value1");
         hitsData.put("hit2", "value2");
         osb.set(hitsData);
@@ -79,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
                 osb.sendPageView("/homepage", "Homepage", null, eventData);
             } else if (eventType == OSB.EventType.SCREENVIEW) {
                 osb.sendScreenView("Homepage", eventData);
+            } else if (eventType == OSB.EventType.EVENT) {
+                osb.sendEvent("event category", "event action", "event label", "1.00");
             }
         } catch (IllegalArgumentException ex) {
             showEventTypeError();
