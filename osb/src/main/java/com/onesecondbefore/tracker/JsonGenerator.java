@@ -110,6 +110,7 @@ final class JsonGenerator {
             json.put("cs", 0);
             json.put("is", 0);
             json.put("aid", config.getAccountId());
+            json.put("sid", config.getSiteId());
             json.put("ns", event.getNamespace());
             json.put("tt", "android-post");
         } catch (JSONException e) {

@@ -33,12 +33,12 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendEvent(View view) {
         String accountId = mEditAccountId.getText().toString();
-        if (accountId == null || accountId.isEmpty()) {
+        if (accountId.isEmpty()) {
             accountId = "development";
         }
 
         String serverUrl = mEditServerUrl.getText().toString();
-        if (serverUrl == null || serverUrl.isEmpty()) {
+        if ( serverUrl.isEmpty()) {
             serverUrl = "https://c.onesecondbefore.com";
         }
 
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "ServerUrl = " + serverUrl);
 
         OSB osb = OSB.getInstance();
-        osb.create(this, accountId, serverUrl);
+        osb.create(this, accountId, serverUrl, "osbdemo.app");
 
         HashMap<String, Object> extraData = new HashMap<>();
         extraData.put("extra1", "value1");

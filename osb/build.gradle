@@ -47,7 +47,7 @@ publishing {
     publications {
         publication(MavenPublication) {
             groupId 'com.onesecondbefore.tracker'
-            version '1.0.0'
+            version '1.0.1'
             artifactId 'tracker-android'
             artifact("$buildDir/outputs/aar/osb-release.aar")
 

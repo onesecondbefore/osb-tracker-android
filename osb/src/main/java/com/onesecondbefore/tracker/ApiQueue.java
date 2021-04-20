@@ -15,6 +15,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.LinkedList;
+import java.util.NoSuchElementException;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -23,8 +24,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 class ApiTask {
-    private JSONObject mData = null;
-    private String mUrl = "";
+    private JSONObject mData;
+    private String mUrl;
 
     ApiTask(String url, JSONObject data) {
         this.mData = data;
@@ -42,7 +43,7 @@ class ApiTask {
 
 class ApiQueue {
     private static final String TAG = "OSB:Queue";
-    private LinkedList<ApiTask> mQueue = new LinkedList<>();
+    private final LinkedList<ApiTask> mQueue = new LinkedList<>();
     private boolean mIsEnabled = true;
     private Context mContext;
     private String mUserAgent;
@@ -77,8 +78,16 @@ class ApiQueue {
     /* Private Functions */
     private void processQueue() {
         if (mIsEnabled && isNetworkConnected() && !mQueue.isEmpty()) {
-            ApiTask task = mQueue.pop();
-            sendPostRequest(task.getUrl(), task.getData().toString());
+            synchronized (mQueue) {
+                try {
+                    ApiTask task = mQueue.removeFirst();
+                    if (task != null) {
+                        sendPostRequest(task.getUrl(), task.getData().toString());
+                    }
+                } catch (NoSuchElementException ex) {
+                    /* Nothing */
+                }
+            }
         }
     }
 
@@ -87,7 +96,7 @@ class ApiQueue {
     private void sendPostRequest(String url, String data) {
         long start = System.currentTimeMillis();
         OkHttpClient client = new OkHttpClient();
-        RequestBody body = RequestBody.create(JSON, data);
+        RequestBody body = RequestBody.create(data, JSON);
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Accept", "application/json")
@@ -97,7 +106,7 @@ class ApiQueue {
         try {
             Log.i(TAG, "Sending request to " + url);
             Response response = client.newCall(request).execute();
-            Log.i(TAG, "Got Response: " + response.code() + " " + response.body().string() + " in " + (System.currentTimeMillis() - start) + " ms");
+            Log.i(TAG, "Got Response: " + response.code() + " " + (response.body() != null ? response.body().string() : "") + " in " + (System.currentTimeMillis() - start) + " ms");
         } catch (IOException ex) {
             Log.e(TAG, "Could not POST request: " + ex.getMessage());
         }
