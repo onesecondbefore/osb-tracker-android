@@ -57,7 +57,7 @@ final class JsonGenerator {
             eventJson.put("dv", getDeviceInfo(event));
             eventJson.accumulate("hits", hits);
             eventJson.put("pg", getPageInfo(viewId));
-            eventJson.put("consent",  Arrays.toString(consent));
+            eventJson.put("consent",  new JSONArray(Arrays.asList(consent)));
 //            eventJson.put("ids", idsInfoJson);
 
 

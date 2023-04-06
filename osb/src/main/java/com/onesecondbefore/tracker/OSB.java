@@ -7,6 +7,7 @@ import android.util.Log;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.ProcessLifecycleOwner;
 
 import org.json.JSONObject;
 
@@ -50,6 +51,7 @@ public final class OSB implements LifecycleObserver {
         }
     }
 
+
     public static OSB getInstance() {
         if (mInstance == null) {
             mInstance = new OSB();
@@ -82,6 +84,8 @@ public final class OSB implements LifecycleObserver {
     public void config(Context context, String accountId, String url, String siteId) {
         clear();
 
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+
         mContext = context.getApplicationContext();
         mConfig.setAccountId(accountId);
         mConfig.setServerUrl(url);
@@ -100,7 +104,7 @@ public final class OSB implements LifecycleObserver {
      * <p> Use {@link OSB#config(Context, String, String, String)} instead.
      */
     public void create(Context context, String accountId, String url) {
-        create(context, accountId, url, null);
+        config(context, accountId, url, null);
     }
     /**
      * @deprecated
@@ -108,18 +112,7 @@ public final class OSB implements LifecycleObserver {
      * <p> Use {@link OSB#config(Context, String, String, String)} instead.
      */
     public void create(Context context, String accountId, String url, String siteId) {
-        clear();
-
-        mContext = context.getApplicationContext();
-        mConfig.setAccountId(accountId);
-        mConfig.setServerUrl(url);
-        mConfig.setSiteId(siteId);
-
-        mQueue = new ApiQueue(mContext);
-        startGpsTracker();
-
-        mIsInitialized = true;
-        Log.i(TAG, "OSB - Initialized");
+        config(context, accountId, url, siteId);
     }
 
     public void debug(boolean isEnabled) {
@@ -168,7 +161,6 @@ public final class OSB implements LifecycleObserver {
         data.put("url", url);
         data.put("ttl", title);
         data.put("ref", referrer);
-        data.put("vid", mViewId);
         send(EventType.PAGEVIEW, null, data);
     }
 
@@ -181,7 +173,6 @@ public final class OSB implements LifecycleObserver {
             data = new HashMap<>();
         }
         data.put("sn", screenName);
-        data.put("vid", mViewId);
         send(EventType.SCREENVIEW, null, data);
     }
 
@@ -261,6 +252,8 @@ public final class OSB implements LifecycleObserver {
         }
     }
 
+
+
     /* Private Functions */
     private void startGpsTracker() {
         if (mGpsTracker == null) {
@@ -302,3 +295,4 @@ public final class OSB implements LifecycleObserver {
         return mViewId;
     }
 }
+

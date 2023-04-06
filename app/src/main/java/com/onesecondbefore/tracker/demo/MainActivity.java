@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         OSB osb = OSB.getInstance();
         osb.config(this, accountId, serverUrl, "osbdemo.app");
 
-        osb.setConsent("Dit is een test consent");
+        osb.setConsent(new String[]{"Dit is een test consent", "dit ook", "en deze ook natuurlijk"});
 
         Log.i(TAG, "consent: " + Arrays.toString(osb.getConsent()));
 
