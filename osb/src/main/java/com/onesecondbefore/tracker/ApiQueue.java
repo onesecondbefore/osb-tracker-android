@@ -1,19 +1,15 @@
 package com.onesecondbefore.tracker;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.util.Log;
-import android.webkit.WebSettings;
-
 import org.json.JSONObject;
-
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
@@ -48,9 +44,33 @@ class ApiQueue {
     private Context mContext;
     private String mUserAgent;
 
+
     ApiQueue(Context context) {
         mContext = context;
-        mUserAgent = WebSettings.getDefaultUserAgent(context);
+        mUserAgent = createUserAgentString();
+    }
+
+    private String createUserAgentString() {
+        String product = Build.PRODUCT;
+        String appName = "unknown";
+        String appVersion = "unknown";
+
+        boolean isEmulator = product.equals("sdk");
+        String deviceModel =  isEmulator ? "Emulator" : Build.MODEL;
+
+        int sdkVersion = Build.VERSION.SDK_INT;
+
+        try {
+            String packageName = this.mContext.getPackageName();
+            PackageInfo pInfo = this.mContext.getPackageManager().getPackageInfo(packageName, 0);
+            appVersion = pInfo.versionName;
+            ApplicationInfo applicationInfo = this.mContext.getPackageManager().getApplicationInfo(packageName, 0);
+            appName = (String)((applicationInfo != null) ? this.mContext.getPackageManager().getApplicationLabel(applicationInfo) : "unknown");
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "getAppInfo - " + e.getMessage());
+        }
+
+        return appName+"/"+appVersion+" (Android " + sdkVersion + ";"+deviceModel+";)";
     }
 
     public void destroy() {
