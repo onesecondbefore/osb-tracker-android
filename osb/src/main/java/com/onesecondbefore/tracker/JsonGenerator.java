@@ -31,11 +31,6 @@ import java.util.TimeZone;
 final class JsonGenerator {
     private static final String TAG = "OSB:Json";
 
-    private class AppInfo {
-        public String name = null;
-        public String version = null;
-    }
-
     private final Context mContext;
 
     JsonGenerator(Context context) {
@@ -44,12 +39,7 @@ final class JsonGenerator {
 
     public JSONObject generate(Config config, Event event, String eventKey,
         Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent) {
-        // Get System Info
-        JSONObject sysInfoJson = getSystemInfo(config, event);
-
-        // Get Device Info
-        JSONObject deviceInfoJson = getDeviceInfo(event);
-
+        
         // Get Hits Info
         JSONObject hitJson = getHitsInfo(event, hitsData);
         JSONArray hits = new JSONArray();
@@ -57,15 +47,14 @@ final class JsonGenerator {
 
 //        // Get Page Info
 //        JSONObject pageInfoJson = getPageInfo(event);
-//
 //        // Get Ids Info
 //        JSONObject idsInfoJson = getIdsInfo(event);
 
 
         JSONObject eventJson = new JSONObject();
         try {
-            eventJson.put("sy", sysInfoJson);
-            eventJson.put("dv", deviceInfoJson);
+            eventJson.put("sy", getSystemInfo(config));
+            eventJson.put("dv", getDeviceInfo(event));
             eventJson.accumulate("hits", hits);
 //            eventJson.put("pg", pageInfoJson);
             eventJson.put("consent",  Arrays.toString(consent));
@@ -114,16 +103,16 @@ final class JsonGenerator {
         return json;
     }
 
-    private JSONObject getSystemInfo(Config config, Event event) {
+    private JSONObject getSystemInfo(Config config) {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "6.0.0." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "6.0." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", 0);
             json.put("aid", config.getAccountId());
             json.put("sid", config.getSiteId());
-            json.put("ns", event.getNamespace());
+            json.put("ns", "default");
             json.put("tt", "android-post");
         } catch (JSONException e) {
             Log.e(TAG, "getSystemInfo - " + e.getMessage());
@@ -135,26 +124,16 @@ final class JsonGenerator {
     private JSONObject getDeviceInfo(Event event) {
         JSONObject json = new JSONObject();
         try {
-            String product = Build.PRODUCT;
-            boolean isEmulator = product.equals("sdk");
-
             Point size = this.getWindowSize();
-            AppInfo info = this.getAppInfo();
 
-            json.put("os", "Android");
-            json.put("ov", Build.VERSION.RELEASE);
-            json.put("brand", Build.BRAND);
-            json.put("model", isEmulator ? "Emulator" : Build.MODEL);
             json.put("sw", size.x);
             json.put("sh", size.y);
             json.put("tz", this.getTimeZoneOffset());
             json.put("lang", this.getLanguage());
             json.put("idfa", this.getAdvertisingClientId());
             json.put("idfv", this.getUniqueId());
-            json.put("an", info.name);
-            json.put("av", info.version);
             json.put("conn", this.getNetworkType());
-            json.put("mem", this.getDiskUsed());
+            json.put("mem", this.getDiskFreeMem());
 
             if (event.isGpsEnabled() && event.getLatitude() != 0 && event.getLongitude() != 0) {
                 JSONObject geoJson = new JSONObject();
@@ -175,22 +154,6 @@ final class JsonGenerator {
         display.getSize(size);
 
         return size;
-    }
-
-    private AppInfo getAppInfo() {
-        AppInfo info = new AppInfo();
-        try {
-            String packageName = this.mContext.getPackageName();
-            PackageInfo pInfo = this.mContext.getPackageManager().getPackageInfo(packageName, 0);
-            ApplicationInfo applicationInfo = this.mContext.getPackageManager().getApplicationInfo(packageName, 0);
-            info.version = pInfo.versionName;
-            info.name = (String)((applicationInfo != null) ?
-                    this.mContext.getPackageManager().getApplicationLabel(applicationInfo) : "unknown");
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.e(TAG, "getAppInfo - " + e.getMessage());
-        }
-
-        return info;
     }
 
     private int getTimeZoneOffset() {
@@ -229,10 +192,10 @@ final class JsonGenerator {
 
     private String getAdvertisingClientId() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            return "";
+            return null;
         }
 
-        String clientId = "";
+        String clientId = null;
         try {
             AdvertisingIdClient.Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
             clientId = adInfo != null ? adInfo.getId() : null;
@@ -243,29 +206,23 @@ final class JsonGenerator {
         return clientId;
     }
 
-    private String getDiskUsed() {
-        long usedMem = 0;
+    private String getDiskFreeMem() {
+        long freeMem = 0;
         try {
             StatFs stat = new StatFs(Environment.getRootDirectory().getPath());
-            if(Build.VERSION.SDK_INT >= 18){
-                long totalMem = (stat. getBlockCountLong() * stat.getBlockSizeLong());
-                long freeMem = (stat. getAvailableBlocksLong() * stat.getBlockSizeLong());
-                usedMem = totalMem - freeMem;
-            }
-            else {
+            if (Build.VERSION.SDK_INT >= 18) {
+                 freeMem = (stat. getAvailableBlocksLong() * stat.getBlockSizeLong());
+            } else {
                 // Noinspection deprecation
-                int totalBlocksInternal = stat.getBlockCount();
                 int blockSizeInternal = stat.getBlockSize();
                 int availBlocksInternal = stat.getAvailableBlocks();
-                long totalMem = ((long)totalBlocksInternal *  (long)blockSizeInternal);
-                long freeMem = ((long)availBlocksInternal *  (long)blockSizeInternal);
-                usedMem = totalMem - freeMem;
+                freeMem = ((long)availBlocksInternal *  (long)blockSizeInternal);
             }
         } catch (Exception e) {
             Log.e(TAG, "getDiskUsed - " + e.getMessage());
         }
 
-        return convertBytesToString(usedMem);
+        return convertBytesToString(freeMem);
     }
 
     public String convertBytesToString(long totalBytes) {
