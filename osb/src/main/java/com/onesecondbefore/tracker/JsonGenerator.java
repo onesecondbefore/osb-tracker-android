@@ -23,6 +23,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -42,7 +43,7 @@ final class JsonGenerator {
     }
 
     public JSONObject generate(Config config, Event event, String eventKey,
-        Map<String, Object> eventData, Map<String, Object> hitsData) {
+        Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent) {
         // Get System Info
         JSONObject sysInfoJson = getSystemInfo(config, event);
 
@@ -54,11 +55,22 @@ final class JsonGenerator {
         JSONArray hits = new JSONArray();
         hits.put(hitJson);
 
+//        // Get Page Info
+//        JSONObject pageInfoJson = getPageInfo(event);
+//
+//        // Get Ids Info
+//        JSONObject idsInfoJson = getIdsInfo(event);
+
+
         JSONObject eventJson = new JSONObject();
         try {
             eventJson.put("sy", sysInfoJson);
             eventJson.put("dv", deviceInfoJson);
             eventJson.accumulate("hits", hits);
+//            eventJson.put("pg", pageInfoJson);
+            eventJson.put("consent",  Arrays.toString(consent));
+//            eventJson.put("ids", idsInfoJson);
+
 
             if (eventKey != null && !eventKey.isEmpty() && eventData != null && eventData.size() > 0) {
                 JSONObject eventDataJson = new JSONObject();
@@ -106,7 +118,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "5.0.0." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "6.0.0." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", 0);
             json.put("aid", config.getAccountId());
@@ -156,7 +168,6 @@ final class JsonGenerator {
 
         return json;
     }
-
     private Point getWindowSize() {
         WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();

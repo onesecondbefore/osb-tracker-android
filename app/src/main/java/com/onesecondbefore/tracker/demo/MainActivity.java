@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.onesecondbefore.tracker.OSB;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,7 +47,11 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "ServerUrl = " + serverUrl);
 
         OSB osb = OSB.getInstance();
-        osb.create(this, accountId, serverUrl, "osbdemo.app");
+        osb.config(this, accountId, serverUrl, "osbdemo.app");
+
+        osb.setConsent("Dit is een test consent");
+
+        Log.i(TAG, "consent: " + Arrays.toString(osb.getConsent()));
 
         HashMap<String, Object> extraData = new HashMap<>();
         extraData.put("extra1", "value1");

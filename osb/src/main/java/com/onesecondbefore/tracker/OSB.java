@@ -1,6 +1,7 @@
 package com.onesecondbefore.tracker;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.lifecycle.Lifecycle;
@@ -9,8 +10,11 @@ import androidx.lifecycle.OnLifecycleEvent;
 
 import org.json.JSONObject;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class OSB implements LifecycleObserver {
@@ -27,6 +31,10 @@ public final class OSB implements LifecycleObserver {
     private String mEventKey = null;
     private Map<String, Object> mEventData = null;
     private Map<String, Object> mHitsData = null;
+
+    private static String SPIdentifier = "osb-shared-preferences";
+    private static String SPConsentKey = "osb-consent";
+
 
     public enum EventType {
         IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING
@@ -68,10 +76,37 @@ public final class OSB implements LifecycleObserver {
         mIsInitialized = false;
     }
 
+    public void config(Context context, String accountId, String url) {
+        config(context, accountId, url, null);
+    }
+    public void config(Context context, String accountId, String url, String siteId) {
+        clear();
+
+        mContext = context.getApplicationContext();
+        mConfig.setAccountId(accountId);
+        mConfig.setServerUrl(url);
+        mConfig.setSiteId(siteId);
+
+        mQueue = new ApiQueue(mContext);
+        startGpsTracker();
+
+        mIsInitialized = true;
+        Log.i(TAG, "OSB - Initialized");
+    }
+
+    /**
+     * @deprecated
+     * This method is renamed to 'config'
+     * <p> Use {@link OSB#config(Context, String, String, String)} instead.
+     */
     public void create(Context context, String accountId, String url) {
         create(context, accountId, url, null);
     }
-
+    /**
+     * @deprecated
+     * This method is renamed to 'config'
+     * <p> Use {@link OSB#config(Context, String, String, String)} instead.
+     */
     public void create(Context context, String accountId, String url, String siteId) {
         clear();
 
@@ -98,6 +133,24 @@ public final class OSB implements LifecycleObserver {
 
     public void set(Map<String, Object> data) {
         mHitsData = data;
+    }
+
+    public void setConsent(String data) { setConsent(new String[]{data}); }
+
+    public void setConsent(String[] data) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putStringSet(SPConsentKey, new HashSet<>(Arrays.asList(data)));
+        editor.apply();
+    }
+
+    public String[] getConsent() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        Set<String> set = preferences.getStringSet(SPConsentKey, null);
+        String arr[] = new String[set.size()];
+        set.toArray(arr);
+
+        return arr;
     }
 
     public void sendPageView(String url, String title) {
@@ -226,7 +279,8 @@ public final class OSB implements LifecycleObserver {
                 public void run() {
                     JsonGenerator generator = new JsonGenerator(mContext);
                     JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData,
-                            mHitsData);
+                            mHitsData, getConsent());
+                    Log.d(TAG, "jsonData: " + jsonData.toString());
                     mQueue.addToQueue(mConfig.getServerUrl(), jsonData);
                 }
             });
