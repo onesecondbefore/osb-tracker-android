@@ -27,7 +27,7 @@ public final class OSB implements LifecycleObserver {
     private Context mContext;
 
     private boolean mIsInitialized = false;
-    private final String mViewId = calculateViewId();
+    private String mViewId = calculateViewId();
     private String mEventKey = null;
     private Map<String, Object> mEventData = null;
     private Map<String, Object> mHitsData = null;
@@ -252,6 +252,8 @@ public final class OSB implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     private void onAppForegrounded() {
         Log.d(TAG, "App in foreground");
+
+        mViewId = calculateViewId();
         startGpsTracker();
 
         if (mQueue != null) {
@@ -279,7 +281,7 @@ public final class OSB implements LifecycleObserver {
                 public void run() {
                     JsonGenerator generator = new JsonGenerator(mContext);
                     JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData,
-                            mHitsData, getConsent());
+                            mHitsData, getConsent(), getViewId(event));
                     Log.d(TAG, "jsonData: " + jsonData.toString());
                     mQueue.addToQueue(mConfig.getServerUrl(), jsonData);
                 }
@@ -291,5 +293,12 @@ public final class OSB implements LifecycleObserver {
 
     private String calculateViewId() {
         return UUID.randomUUID().toString().substring(0, 8);
+    }
+
+    private String getViewId(Event event) {
+        if (event.getTypeValue() == "pageview"){
+            mViewId = calculateViewId();
+        }
+        return mViewId;
     }
 }

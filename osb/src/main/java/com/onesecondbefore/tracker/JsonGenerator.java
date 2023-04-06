@@ -38,8 +38,8 @@ final class JsonGenerator {
     }
 
     public JSONObject generate(Config config, Event event, String eventKey,
-        Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent) {
-        
+        Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent, String viewId) {
+
         // Get Hits Info
         JSONObject hitJson = getHitsInfo(event, hitsData);
         JSONArray hits = new JSONArray();
@@ -56,7 +56,7 @@ final class JsonGenerator {
             eventJson.put("sy", getSystemInfo(config));
             eventJson.put("dv", getDeviceInfo(event));
             eventJson.accumulate("hits", hits);
-//            eventJson.put("pg", pageInfoJson);
+            eventJson.put("pg", getPageInfo(viewId));
             eventJson.put("consent",  Arrays.toString(consent));
 //            eventJson.put("ids", idsInfoJson);
 
@@ -147,6 +147,19 @@ final class JsonGenerator {
 
         return json;
     }
+
+    private JSONObject getPageInfo(String viewId) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("view_id", viewId);
+        } catch (JSONException e) {
+            Log.e(TAG, "getPageInfo - " + e.getMessage());
+        }
+
+        return json;
+    }
+
+
     private Point getWindowSize() {
         WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
