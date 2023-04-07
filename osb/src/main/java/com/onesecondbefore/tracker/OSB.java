@@ -33,11 +33,13 @@ public final class OSB implements LifecycleObserver {
     private Map<String, Object> mEventData = null;
     private Map<String, Object> mHitsData = null;
 
-    private static String SPIdentifier = "osb-shared-preferences";
-    private static String SPConsentKey = "osb-consent";
+    private static final String SPIdentifier = "osb-shared-preferences";
+    private static final String SPConsentKey = "osb-consent";
 
 
-    public enum EventType {
+
+
+    public enum HitType {
         IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING
     }
 
@@ -98,22 +100,7 @@ public final class OSB implements LifecycleObserver {
         Log.i(TAG, "OSB - Initialized");
     }
 
-    /**
-     * @deprecated
-     * This method is renamed to 'config'
-     * <p> Use {@link OSB#config(Context, String, String, String)} instead.
-     */
-    public void create(Context context, String accountId, String url) {
-        config(context, accountId, url, null);
-    }
-    /**
-     * @deprecated
-     * This method is renamed to 'config'
-     * <p> Use {@link OSB#config(Context, String, String, String)} instead.
-     */
-    public void create(Context context, String accountId, String url, String siteId) {
-        config(context, accountId, url, siteId);
-    }
+
 
     public void debug(boolean isEnabled) {
         mConfig.setDebug(isEnabled);
@@ -140,40 +127,31 @@ public final class OSB implements LifecycleObserver {
     public String[] getConsent() {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
         Set<String> set = preferences.getStringSet(SPConsentKey, null);
-        String arr[] = new String[set.size()];
+        String[] arr = new String[set.size()];
         set.toArray(arr);
 
         return arr;
     }
 
-    public void sendPageView(String url, String title) {
-        sendPageView(url, title, null, null);
-    }
-
-    public void sendPageView(String url, String title, String referrer) {
-        sendPageView(url, title, referrer, null);
-    }
-
-    public void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
-        if (data == null) {
-            data = new HashMap<>();
-        }
-        data.put("url", url);
-        data.put("ttl", title);
-        data.put("ref", referrer);
-        send(EventType.PAGEVIEW, null, data);
-    }
-
     public void sendScreenView(String screenName) {
-        sendScreenView(screenName, null);
+        sendScreenView(screenName, null, null);
+    }
+
+    public void sendScreenView(String screenName, String className) {
+        sendScreenView(screenName, className, null);
     }
 
     public void sendScreenView(String screenName, Map<String, Object> data) {
+        sendScreenView(screenName, null, data);
+    }
+
+    public void sendScreenView(String screenName, String className, Map<String, Object> data) {
         if (data == null) {
             data = new HashMap<>();
         }
         data.put("sn", screenName);
-        send(EventType.SCREENVIEW, null, data);
+        data.put("cn", className);
+        send(HitType.SCREENVIEW, null, data);
     }
 
     public void sendEvent(String category) {
@@ -208,18 +186,18 @@ public final class OSB implements LifecycleObserver {
         if (value != null) {
             data.put("value", value);
         }
-        send(EventType.EVENT, null, data);
+        send(HitType.EVENT, null, data);
     }
 
-    public void send(EventType type) {
+    public void send(HitType type) {
         send(type, null, null);
     }
 
-    public void send(EventType type, Map<String, Object> data) {
+    public void send(HitType type, Map<String, Object> data) {
         send(type, null, data);
     }
 
-    public void send(EventType type, String actionType,
+    public void send(HitType type, String actionType,
                           Map<String, Object> data) {
         if (mIsInitialized) {
             mInstance.sendEventToQueue(type, actionType, data);
@@ -252,6 +230,62 @@ public final class OSB implements LifecycleObserver {
         }
     }
 
+    /* Deprecated Functions */
+    /**
+     * @deprecated
+     * This enum is renamed to 'HitType'
+     * <p> Use {@link HitType} instead. </p>
+     */
+    public enum EventType {
+        IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING
+    }
+
+    /**
+     * @deprecated
+     * This method is renamed to 'config'
+     * <p> Use {@link OSB#config(Context, String, String, String)} instead. </p>
+     */
+    public void create(Context context, String accountId, String url) {
+        config(context, accountId, url, null);
+    }
+    /**
+     * @deprecated
+     * This method is renamed to 'config'
+     * <p> Use {@link OSB#config(Context, String, String, String)} instead. </p>
+     */
+    public void create(Context context, String accountId, String url, String siteId) {
+        config(context, accountId, url, siteId);
+    }
+
+    /**
+     * @deprecated
+     * This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
+     */
+    public void sendPageView(String url, String title) {
+        sendPageView(url, title, null, null);
+    }
+
+    /**
+     * @deprecated
+     * This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
+     */
+    public void sendPageView(String url, String title, String referrer) {
+        sendPageView(url, title, referrer, null);
+    }
+
+    /**
+     * @deprecated
+     * This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
+     */
+    public void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
+        if (data == null) {
+            data = new HashMap<>();
+        }
+        data.put("url", url);
+        data.put("ttl", title);
+        data.put("ref", referrer);
+        send(HitType.PAGEVIEW, null, data);
+    }
 
 
     /* Private Functions */
@@ -263,7 +297,7 @@ public final class OSB implements LifecycleObserver {
         mGpsTracker.startTracker();
     }
 
-    private void sendEventToQueue(OSB.EventType type, String actionType,
+    private void sendEventToQueue(OSB.HitType type, String actionType,
                                   Map<String, Object> data) {
         if (mQueue != null) {
             this.startGpsTracker();

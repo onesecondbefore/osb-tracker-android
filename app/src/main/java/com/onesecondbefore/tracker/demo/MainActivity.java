@@ -65,30 +65,30 @@ public class MainActivity extends AppCompatActivity {
 
         String type = mEditType.getText().toString();
         String action = mEditAction.getText().toString();
-        OSB.EventType eventType = getEventType(type);
+        OSB.HitType hitType = getHitType(type);
 
         Log.i(TAG, "type = " + type);
         Log.i(TAG, "action = " + action);
-        Log.i(TAG, "eventType = " + eventType);
+        Log.i(TAG, "hitType = " + hitType);
 
         try {
-            Map<String, Object> eventData = getEventData(OSB.EventType.valueOf(type.toUpperCase()));
+            Map<String, Object> eventData = getEventData(OSB.HitType.valueOf(type.toUpperCase()));
 
-            if (eventType == OSB.EventType.ACTION) {
+            if (hitType == OSB.HitType.ACTION) {
                 if (action.isEmpty()) {
                     showActionError();
                 } else {
-                    osb.send(OSB.EventType.ACTION, action, eventData);
+                    osb.send(OSB.HitType.ACTION, action, eventData);
                 }
-            } else if (eventType == OSB.EventType.PAGEVIEW) {
+            } else if (hitType == OSB.HitType.PAGEVIEW) {
                 osb.sendPageView("/homepage", "Homepage", null, eventData);
-            } else if (eventType == OSB.EventType.SCREENVIEW) {
+            } else if (hitType == OSB.HitType.SCREENVIEW) {
                 osb.sendScreenView("Homepage", eventData);
-            } else if (eventType == OSB.EventType.EVENT) {
+            } else if (hitType == OSB.HitType.EVENT) {
                 osb.sendEvent("event category", "event action", "event label", "1.00");
             }
         } catch (IllegalArgumentException ex) {
-            showEventTypeError();
+            showHitTypeError();
         }
     }
 
@@ -107,65 +107,65 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void showEventTypeError() {
+    private void showHitTypeError() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Invalid event type");
+        builder.setMessage("Invalid hit type");
         builder.show();
     }
 
-    private OSB.EventType getEventType(String type) {
-        OSB.EventType eventType = OSB.EventType.EVENT;
+    private OSB.HitType getHitType(String type) {
+        OSB.HitType hitType = OSB.HitType.EVENT;
         if (type.equalsIgnoreCase("ids")) {
-            eventType = OSB.EventType.IDS;
+            hitType = OSB.HitType.IDS;
         } else if (type.equalsIgnoreCase("screenview")) {
-            eventType = OSB.EventType.SCREENVIEW;
+            hitType = OSB.HitType.SCREENVIEW;
         } else if (type.equalsIgnoreCase("pageview")) {
-            eventType = OSB.EventType.PAGEVIEW;
+            hitType = OSB.HitType.PAGEVIEW;
         } else if (type.equalsIgnoreCase("action")) {
-            eventType = OSB.EventType.ACTION;
+            hitType = OSB.HitType.ACTION;
         } else if (type.equalsIgnoreCase("exception")) {
-            eventType = OSB.EventType.EXCEPTION;
+            hitType = OSB.HitType.EXCEPTION;
         } else if (type.equalsIgnoreCase("social")) {
-            eventType = OSB.EventType.SOCIAL;
+            hitType = OSB.HitType.SOCIAL;
         } else if (type.equalsIgnoreCase("timing")) {
-            eventType = OSB.EventType.TIMING;
+            hitType = OSB.HitType.TIMING;
         }
 
-        return eventType;
+        return hitType;
     }
 
-    private Map<String, Object> getEventData(OSB.EventType type) {
+    private Map<String, Object> getEventData(OSB.hitType type) {
         Map<String, Object> eventData = new HashMap<>();
-        if (type == OSB.EventType.IDS) {
+        if (type == OSB.hitType.IDS) {
             eventData.put("key", "login");
             eventData.put("value", "demouser@OSB.com");
             eventData.put("label", "single sign-on");
             eventData.put("is-signed-user", true);
             eventData.put("password", "OSBdemo123");
-        } else if (type == OSB.EventType.SCREENVIEW) {
+        } else if (type == OSB.hitType.SCREENVIEW) {
             eventData.put("id", "ink001");
             eventData.put("title", "Welcome to the profileScreen");
-        }  else if (type == OSB.EventType.EVENT) {
+        }  else if (type == OSB.hitType.EVENT) {
             eventData.put("category", "category1");
             eventData.put("action", "action1");
             eventData.put("value", 30.0);
             eventData.put("extra_item", true);
             eventData.put("video_finished", false);
-        } else if (type == OSB.EventType.ACTION) {
+        } else if (type == OSB.hitType.ACTION) {
             eventData.put("id", "ink001");
             eventData.put("revenue", 29.20);
             eventData.put("shipping", 3.50);
             eventData.put("coupon", "ABC123");
-        }  else if (type == OSB.EventType.EXCEPTION) {
+        }  else if (type == OSB.hitType.EXCEPTION) {
             eventData.put("category", "JS Error");
             eventData.put("label", "ReferenceError: bla is not defined");
             eventData.put("userId", "test@demo.com");
-        } else if (type == OSB.EventType.SOCIAL) {
+        } else if (type == OSB.hitType.SOCIAL) {
             eventData.put("category", "Facebook");
             eventData.put("action", "like");
             eventData.put("label", "http://foo.com");
             eventData.put("addComment", true);
-        } else if (type == OSB.EventType.TIMING) {
+        } else if (type == OSB.hitType.TIMING) {
             eventData.put("category", "Page load");
             eventData.put("action", "onDomLoad");
             eventData.put("value", 30);

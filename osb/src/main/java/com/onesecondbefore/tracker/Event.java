@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Hashtable;
 
 public class Event {
-    private OSB.EventType mType = OSB.EventType.EVENT;
+    private OSB.HitType mType = OSB.HitType.EVENT;
     private String mNamespace = "default";
     private Map<String, Object> mData = new Hashtable<>();
     private String mSubType = "";
@@ -12,7 +12,7 @@ public class Event {
     private double mLatitude = 0;
     private double mLongitude = 0;
 
-    Event(OSB.EventType type, String subType, Map<String, Object> data,
+    Event(OSB.HitType type, String subType, Map<String, Object> data,
           boolean isGpsEnabled, double latitude, double longitude) {
         mType = type;
         mSubType = subType != null ? subType : "";
@@ -31,21 +31,21 @@ public class Event {
 
     public String getTypeValue() {
         String value = "event";
-        if (mType == OSB.EventType.EVENT) {
+        if (mType == OSB.HitType.EVENT) {
             value = "event";
-        } else if (mType == OSB.EventType.SCREENVIEW) {
+        } else if (mType == OSB.HitType.SCREENVIEW) {
             value = "screenview";
-        } else if (mType == OSB.EventType.PAGEVIEW) {
+        } else if (mType == OSB.HitType.PAGEVIEW) {
             value = "pageview";
-        } else if (mType == OSB.EventType.ACTION) {
+        } else if (mType == OSB.HitType.ACTION) {
             value = "action";
-        } else if (mType == OSB.EventType.IDS) {
+        } else if (mType == OSB.HitType.IDS) {
             value = "ids";
-        } else if (mType == OSB.EventType.EXCEPTION) {
+        } else if (mType == OSB.HitType.EXCEPTION) {
             value = "exception";
-        } else if (mType == OSB.EventType.SOCIAL) {
+        } else if (mType == OSB.HitType.SOCIAL) {
             value = "social";
-        } else if (mType == OSB.EventType.TIMING) {
+        } else if (mType == OSB.HitType.TIMING) {
             value = "timing";
         }
 
@@ -54,7 +54,7 @@ public class Event {
 
     public String getTypeData() {
         String data = getTypeValue();
-        if (mType == OSB.EventType.ACTION) {
+        if (mType == OSB.HitType.ACTION) {
             data = mSubType;
         }
 
@@ -64,21 +64,21 @@ public class Event {
     public String getTypeDataKey() {
         // Get the type of the hits
         String key = "ev";
-        if (mType == OSB.EventType.EVENT) {
+        if (mType == OSB.HitType.EVENT) {
             key = "ev";
-        } else if (mType == OSB.EventType.SCREENVIEW) {
+        } else if (mType == OSB.HitType.SCREENVIEW) {
             key = "sv";
-        } else if (mType == OSB.EventType.PAGEVIEW) {
+        } else if (mType == OSB.HitType.PAGEVIEW) {
             key = "pg";
-        } else if (mType == OSB.EventType.ACTION) {
+        } else if (mType == OSB.HitType.ACTION) {
             key = "ac";
-        } else if (mType == OSB.EventType.IDS) {
+        } else if (mType == OSB.HitType.IDS) {
             key = "id";
-        } else if (mType == OSB.EventType.EXCEPTION) {
+        } else if (mType == OSB.HitType.EXCEPTION) {
             key = "ex";
-        } else if (mType == OSB.EventType.SOCIAL) {
+        } else if (mType == OSB.HitType.SOCIAL) {
             key = "sc";
-        } else if (mType == OSB.EventType.TIMING) {
+        } else if (mType == OSB.HitType.TIMING) {
             key = "ti";
         }
 
@@ -87,16 +87,16 @@ public class Event {
 
     public String[] getDefaultEventKeys() {
         String[] keys = new String[] {};
-        if (mType == OSB.EventType.EVENT || mType == OSB.EventType.EXCEPTION ||
-                mType == OSB.EventType.SOCIAL || mType == OSB.EventType.TIMING) {
+        if (mType == OSB.HitType.EVENT || mType == OSB.HitType.EXCEPTION ||
+                mType == OSB.HitType.SOCIAL || mType == OSB.HitType.TIMING) {
             keys = new String[] { "category", "action", "label", "value" };
-        } else if (mType == OSB.EventType.SCREENVIEW) {
+        } else if (mType == OSB.HitType.SCREENVIEW) {
             keys = new String[] { "id", "name" };
-        } else if (mType == OSB.EventType.PAGEVIEW) {
+        } else if (mType == OSB.HitType.PAGEVIEW) {
             keys = new String[] { "id", "title", "viewId", "url", "referrer" };
-        } else if (mType == OSB.EventType.ACTION) {
+        } else if (mType == OSB.HitType.ACTION) {
             keys = new String[] { "id", "tax", "discount", "currencyCode", "revenue" };
-        } else if (mType == OSB.EventType.IDS) {
+        } else if (mType == OSB.HitType.IDS) {
             keys = new String[] { "key", "value", "label" };
         }
 
