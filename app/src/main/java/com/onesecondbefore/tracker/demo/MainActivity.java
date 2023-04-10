@@ -86,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
                 osb.sendScreenView("Homepage", eventData);
             } else if (hitType == OSB.HitType.EVENT) {
                 osb.sendEvent("event category", "event action", "event label", "1.00");
+            } else if (hitType == OSB.HitType.AGGREGATE) {
+                osb.sendAggregateEvent("scope", "scrolledepth", OSB.AggregateType.MAX, 0.8);
             }
         } catch (IllegalArgumentException ex) {
             showHitTypeError();
@@ -129,43 +131,44 @@ public class MainActivity extends AppCompatActivity {
             hitType = OSB.HitType.SOCIAL;
         } else if (type.equalsIgnoreCase("timing")) {
             hitType = OSB.HitType.TIMING;
+        } else if (type.equalsIgnoreCase("aggregate")) {
+            hitType = OSB.HitType.AGGREGATE;
         }
-
         return hitType;
     }
 
-    private Map<String, Object> getEventData(OSB.hitType type) {
+    private Map<String, Object> getEventData(OSB.HitType type) {
         Map<String, Object> eventData = new HashMap<>();
-        if (type == OSB.hitType.IDS) {
+        if (type == OSB.HitType.IDS) {
             eventData.put("key", "login");
             eventData.put("value", "demouser@OSB.com");
             eventData.put("label", "single sign-on");
             eventData.put("is-signed-user", true);
             eventData.put("password", "OSBdemo123");
-        } else if (type == OSB.hitType.SCREENVIEW) {
+        } else if (type == OSB.HitType.SCREENVIEW) {
             eventData.put("id", "ink001");
             eventData.put("title", "Welcome to the profileScreen");
-        }  else if (type == OSB.hitType.EVENT) {
+        }  else if (type == OSB.HitType.EVENT) {
             eventData.put("category", "category1");
             eventData.put("action", "action1");
             eventData.put("value", 30.0);
             eventData.put("extra_item", true);
             eventData.put("video_finished", false);
-        } else if (type == OSB.hitType.ACTION) {
+        } else if (type == OSB.HitType.ACTION) {
             eventData.put("id", "ink001");
             eventData.put("revenue", 29.20);
             eventData.put("shipping", 3.50);
             eventData.put("coupon", "ABC123");
-        }  else if (type == OSB.hitType.EXCEPTION) {
+        }  else if (type == OSB.HitType.EXCEPTION) {
             eventData.put("category", "JS Error");
             eventData.put("label", "ReferenceError: bla is not defined");
             eventData.put("userId", "test@demo.com");
-        } else if (type == OSB.hitType.SOCIAL) {
+        } else if (type == OSB.HitType.SOCIAL) {
             eventData.put("category", "Facebook");
             eventData.put("action", "like");
             eventData.put("label", "http://foo.com");
             eventData.put("addComment", true);
-        } else if (type == OSB.hitType.TIMING) {
+        } else if (type == OSB.HitType.TIMING) {
             eventData.put("category", "Page load");
             eventData.put("action", "onDomLoad");
             eventData.put("value", 30);

@@ -29,31 +29,37 @@ public class Event {
         return mNamespace;
     }
 
-    public String getTypeValue() {
-        String value = "event";
-        if (mType == OSB.HitType.EVENT) {
-            value = "event";
-        } else if (mType == OSB.HitType.SCREENVIEW) {
-            value = "screenview";
+    public String getTypeIdentifier() {
+        if (mType == OSB.HitType.SCREENVIEW) {
+            return "screenview";
         } else if (mType == OSB.HitType.PAGEVIEW) {
-            value = "pageview";
+           return "pageview";
         } else if (mType == OSB.HitType.ACTION) {
-            value = "action";
+            return "ac";
         } else if (mType == OSB.HitType.IDS) {
-            value = "ids";
-        } else if (mType == OSB.HitType.EXCEPTION) {
-            value = "exception";
-        } else if (mType == OSB.HitType.SOCIAL) {
-            value = "social";
-        } else if (mType == OSB.HitType.TIMING) {
-            value = "timing";
+            return "ids";
+        } else if (mType == OSB.HitType.EVENT) {
+            return "event";
+        } else if (mType == OSB.HitType.AGGREGATE) {
+            return "aggregate";
+        } else if (mType == OSB.HitType.VIEWABLE_IMPRESSION) {
+            return "viewable_impression";
         }
 
-        return value;
+        // TODO: Confirm if these can be removed (they are not currently present in the iOS SDK) ^MB
+//        } else if (mType == OSB.HitType.EXCEPTION) {
+//            return "exception";
+//        } else if (mType == OSB.HitType.SOCIAL) {
+//            return "social";
+//        } else if (mType == OSB.HitType.TIMING) {
+//            return "timing";
+//        }
+
+        return "event";
     }
 
     public String getTypeData() {
-        String data = getTypeValue();
+        String data = getTypeIdentifier();
         if (mType == OSB.HitType.ACTION) {
             data = mSubType;
         }

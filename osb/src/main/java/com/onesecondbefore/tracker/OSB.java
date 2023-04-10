@@ -2,6 +2,7 @@ package com.onesecondbefore.tracker;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.lifecycle.Lifecycle;
@@ -40,7 +41,15 @@ public final class OSB implements LifecycleObserver {
 
 
     public enum HitType {
-        IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING
+        IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING, VIEWABLE_IMPRESSION, AGGREGATE
+    }
+
+    public enum SetType {
+        ACTION, EVENT, ITEM, PAGE, VIEWABLE_IMPRESSION, NONE
+    }
+
+    public enum AggregateType {
+       MAX, MIN, COUNT, SUM, AVERAGE
     }
 
     @Override
@@ -189,6 +198,22 @@ public final class OSB implements LifecycleObserver {
         send(HitType.EVENT, null, data);
     }
 
+    public void sendAggregateEvent(String scope, String name, AggregateType aggregateType, Double value) {
+        Map<String, Object> actionData = new HashMap<>();
+        if (!TextUtils.isEmpty(scope)){
+            actionData.put("scope", scope);
+        }
+
+        if (!TextUtils.isEmpty(name)){
+            actionData.put("name", name);
+        }
+
+        actionData.put("value", String.format("%.1f", value));
+        actionData.put("aggregate", aggregateTypeToString(aggregateType));
+
+        send(HitType.AGGREGATE, actionData);
+    }
+
     public void send(HitType type) {
         send(type, null, null);
     }
@@ -323,10 +348,27 @@ public final class OSB implements LifecycleObserver {
     }
 
     private String getViewId(Event event) {
-        if (event.getTypeValue() == "pageview"){
+        if (event.getTypeIdentifier() == "pageview"){
             mViewId = calculateViewId();
         }
         return mViewId;
+    }
+
+    private String aggregateTypeToString(AggregateType aggregateType) {
+        switch (aggregateType){
+            case MAX:
+                return "max";
+            case MIN:
+                return "min";
+            case SUM:
+                return "sum";
+            case COUNT:
+                return "count";
+            case AVERAGE:
+                return "avg";
+            default:
+                return "";
+        }
     }
 }
 
