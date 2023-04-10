@@ -334,6 +334,10 @@ public final class OSB implements LifecycleObserver {
 
     /* Private Functions */
     private void startGpsTracker() {
+        if (mContext == null) {
+            return;
+        }
+
         if (mGpsTracker == null) {
             mGpsTracker = new GpsTracker(mContext);
         }

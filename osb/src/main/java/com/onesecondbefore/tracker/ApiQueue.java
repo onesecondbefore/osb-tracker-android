@@ -124,6 +124,7 @@ class ApiQueue {
                 .post(body)
                 .build();
         try {
+            Log.i(TAG, "Request: " + request);
             Log.i(TAG, "Sending request to " + url);
             Response response = client.newCall(request).execute();
             Log.i(TAG, "Got Response: " + response.code() + " " + (response.body() != null ? response.body().string() : "") + " in " + (System.currentTimeMillis() - start) + " ms");
