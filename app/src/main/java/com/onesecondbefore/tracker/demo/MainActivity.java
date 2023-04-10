@@ -11,8 +11,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.onesecondbefore.tracker.OSB;
 
+import java.sql.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -49,19 +52,19 @@ public class MainActivity extends AppCompatActivity {
         OSB osb = OSB.getInstance();
         osb.config(this, accountId, serverUrl, "osbdemo.app");
 
-        osb.setConsent(new String[]{"Dit is een test consent", "dit ook", "en deze ook natuurlijk"});
+        osb.setConsent(new String[]{"marketing", "social", "functional", "advertising"});
 
         Log.i(TAG, "consent: " + Arrays.toString(osb.getConsent()));
 
-        HashMap<String, Object> extraData = new HashMap<>();
-        extraData.put("extra1", "value1");
-        extraData.put("extra2", "value2");
-        osb.set("extra", extraData);
-
-        HashMap<String, Object> hitsData = new HashMap<>();
-        hitsData.put("hit1", "value1");
-        hitsData.put("hit2", "value2");
-        osb.set(hitsData);
+//        HashMap<String, Object> extraData = new HashMap<>();
+//        extraData.put("extra1", "value1");
+//        extraData.put("extra2", "value2");
+//        osb.set("extra", extraData);
+//
+//        HashMap<String, Object> hitsData = new HashMap<>();
+//        hitsData.put("hit1", "value1");
+//        hitsData.put("hit2", "value2");
+//        osb.set(hitsData);
 
         String type = mEditType.getText().toString();
         String action = mEditAction.getText().toString();
@@ -71,8 +74,27 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "action = " + action);
         Log.i(TAG, "hitType = " + hitType);
 
+        Map<String, Object> item1 = new HashMap<>();
+        item1.put("id", "sku123");
+        item1.put("name", "Apple iPhone 14 Pro");
+        item1.put("category", "mobile");
+        item1.put("price",  1234.56);
+        item1.put("quantity",  1);
+
+        Map<String, Object> item2 = new HashMap<>();
+        item2.put("id", "sku234");
+        item2.put("name", "Samsung Galaxy S22");
+        item2.put("category", "mobile");
+        item2.put("price",  1034.56);
+        item2.put("quantity",  1);
+
+        Map<String, Object>[] itemData = new HashMap[2];
+        itemData[0] = item1;
+        itemData[1] = item2;
+
+        osb.set(OSB.SetType.ITEM, itemData);
         try {
-            Map<String, Object> eventData = getEventData(OSB.HitType.valueOf(type.toUpperCase()));
+            Map<String, Object> eventData = getEventData(hitType);
 
             if (hitType == OSB.HitType.ACTION) {
                 if (action.isEmpty()) {
@@ -88,6 +110,8 @@ public class MainActivity extends AppCompatActivity {
                 osb.sendEvent("event category", "event action", "event label", "1.00");
             } else if (hitType == OSB.HitType.AGGREGATE) {
                 osb.sendAggregateEvent("scope", "scrolledepth", OSB.AggregateType.MAX, 0.8);
+            } else if (hitType == OSB.HitType.VIEWABLE_IMPRESSION) {
+                osb.send(OSB.HitType.VIEWABLE_IMPRESSION, eventData);
             }
         } catch (IllegalArgumentException ex) {
             showHitTypeError();
@@ -133,7 +157,8 @@ public class MainActivity extends AppCompatActivity {
             hitType = OSB.HitType.TIMING;
         } else if (type.equalsIgnoreCase("aggregate")) {
             hitType = OSB.HitType.AGGREGATE;
-        }
+        } else if (type.equalsIgnoreCase("impression"))
+            hitType = OSB.HitType.VIEWABLE_IMPRESSION;
         return hitType;
     }
 
@@ -155,10 +180,11 @@ public class MainActivity extends AppCompatActivity {
             eventData.put("extra_item", true);
             eventData.put("video_finished", false);
         } else if (type == OSB.HitType.ACTION) {
-            eventData.put("id", "ink001");
-            eventData.put("revenue", 29.20);
-            eventData.put("shipping", 3.50);
-            eventData.put("coupon", "ABC123");
+            eventData.put("id", "abcd1234");
+            eventData.put("revenue", 2269.12);
+            eventData.put("tax", (2269.12 * 0.21));
+            eventData.put("shipping", 100);
+            eventData.put("affiliation", "partner_funnel");
         }  else if (type == OSB.HitType.EXCEPTION) {
             eventData.put("category", "JS Error");
             eventData.put("label", "ReferenceError: bla is not defined");
@@ -173,8 +199,10 @@ public class MainActivity extends AppCompatActivity {
             eventData.put("action", "onDomLoad");
             eventData.put("value", 30);
             eventData.put("isfavVideo", true);
+        } else if (type == OSB.HitType.VIEWABLE_IMPRESSION) {
+            eventData.put("a", 1);
+            eventData.put("b", 2);
         }
-
         return eventData;
     }
 }

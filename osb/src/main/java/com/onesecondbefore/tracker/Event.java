@@ -29,6 +29,10 @@ public class Event {
         return mNamespace;
     }
 
+    public OSB.HitType getType() {
+        return mType;
+    }
+
     public String getTypeIdentifier() {
         if (mType == OSB.HitType.SCREENVIEW) {
             return "screenview";

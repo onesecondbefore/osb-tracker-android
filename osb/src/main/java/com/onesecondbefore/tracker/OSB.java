@@ -33,6 +33,7 @@ public final class OSB implements LifecycleObserver {
     private String mEventKey = null;
     private Map<String, Object> mEventData = null;
     private Map<String, Object> mHitsData = null;
+    private Map<String, Object> mSetDataObject = new HashMap<String, Object>();
 
     private static final String SPIdentifier = "osb-shared-preferences";
     private static final String SPConsentKey = "osb-consent";
@@ -123,6 +124,22 @@ public final class OSB implements LifecycleObserver {
     public void set(Map<String, Object> data) {
         mHitsData = data;
     }
+
+    public void set(SetType type, Map<String, Object>[] data) {
+        mSetDataObject.put(type.name(), data);
+    }
+
+//    public func set(data: [String: Any]) {
+//        hitsData = data
+//    }
+//
+//    public func setIds(data: [String: Any]) {
+//        setIds(data: [data])
+//    }
+//
+//    public func setIds(data: [[String: Any]]) {
+//        ids = data
+//    }
 
     public void setConsent(String data) { setConsent(new String[]{data}); }
 
@@ -333,7 +350,7 @@ public final class OSB implements LifecycleObserver {
                 public void run() {
                     JsonGenerator generator = new JsonGenerator(mContext);
                     JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData,
-                            mHitsData, getConsent(), getViewId(event));
+                            mHitsData, getConsent(), getViewId(event), mSetDataObject);
                     Log.d(TAG, "jsonData: " + jsonData.toString());
                     mQueue.addToQueue(mConfig.getServerUrl(), jsonData);
                 }
@@ -348,7 +365,7 @@ public final class OSB implements LifecycleObserver {
     }
 
     private String getViewId(Event event) {
-        if (event.getTypeIdentifier() == "pageview"){
+        if (event.getType() == HitType.PAGEVIEW){
             mViewId = calculateViewId();
         }
         return mViewId;

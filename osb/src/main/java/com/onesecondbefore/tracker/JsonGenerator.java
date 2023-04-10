@@ -24,6 +24,7 @@ import org.json.JSONObject;
 
 import java.text.DecimalFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -32,18 +33,24 @@ final class JsonGenerator {
     private static final String TAG = "OSB:Json";
 
     private final Context mContext;
+    private Map<String, Object> mSetDataObject;
 
     JsonGenerator(Context context) {
         this.mContext = context;
     }
 
     public JSONObject generate(Config config, Event event, String eventKey,
-        Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent, String viewId) {
+        Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent, String viewId, Map<String, Object> setDataObject) {
+
+        mSetDataObject = setDataObject;
 
         // Get Hits Info
         JSONObject hitJson = getHitsInfo(event, hitsData);
         JSONArray hits = new JSONArray();
         hits.put(hitJson);
+
+
+
 
 //        // Get Page Info
 //        JSONObject pageInfoJson = getPageInfo(event);
@@ -53,7 +60,7 @@ final class JsonGenerator {
 
         JSONObject eventJson = new JSONObject();
         try {
-            eventJson.put("sy", getSystemInfo(config));
+            eventJson.put("sy", getSystemInfo(config, event));
             eventJson.put("dv", getDeviceInfo(event));
             eventJson.accumulate("hits", hits);
             eventJson.put("pg", getPageInfo(viewId));
@@ -78,38 +85,105 @@ final class JsonGenerator {
 
     /* Private Functions */
 
-    private JSONObject getHitsInfo(Event event, Map<String, Object> hitsData) {
-        JSONObject json = new JSONObject();
+    private Map<String, Object>[] getSetDataForType(OSB.SetType type) {
+        if (mSetDataObject == null) {
+            return null;
+        }
 
         try {
-            for (Map.Entry<String, Object> entry: event.getData().entrySet()) {
-                String key = entry.getKey();
-                Object value = entry.getValue();
+            return (HashMap<String,Object>[])mSetDataObject.get(type.name());
+        } catch(ClassCastException e) {
+            return null;
+        }
+    }
 
-                json.put(key, value);
+    private JSONObject getHitsInfo(Event event, Map<String, Object> hitsData) {
+        JSONObject hitObj = new JSONObject();
+        JSONObject dataObj = new JSONObject();
+
+        try {
+            switch (event.getType()){
+                case PAGEVIEW:
+                    Map<String, Object>[] pageData = getSetDataForType(OSB.SetType.PAGE);
+                    if (pageData != null) {
+                        for (Map<String, Object> page : pageData) {
+                            for (Map.Entry<String, Object> entry : page.entrySet()) {
+                                dataObj.put(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    }
+                    break;
+                case EVENT:
+                    Map<String, Object>[] eventData = getSetDataForType(OSB.SetType.EVENT);
+                    if (eventData != null) {
+                        for (Map<String, Object> eventObj : eventData) {
+                            for (Map.Entry<String, Object> entry : eventObj.entrySet()) {
+                                if (isSpecialKey(entry.getKey(), OSB.HitType.EVENT)) {
+                                    hitObj.put(entry.getKey(), entry.getValue());
+                                } else {
+                                    dataObj.put(entry.getKey(), entry.getValue());
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case ACTION:
+                    Map<String, Object>[] actionData = getSetDataForType(OSB.SetType.ITEM);
+                    if (actionData != null) {
+                       hitObj.put("items", new JSONArray(Arrays.asList(actionData)));
+                    }
+                    break;
+                case VIEWABLE_IMPRESSION:
+                    Map<String, Object>[] viData = getSetDataForType(OSB.SetType.VIEWABLE_IMPRESSION);
+                    if (viData != null) {
+                        for (Map<String, Object> viewableImpression : viData) {
+                            for (Map.Entry<String, Object> entry : viewableImpression.entrySet()) {
+                                dataObj.put(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    break;
             }
-            json.put("tp", event.getTypeData());
-            json.put("ht", System.currentTimeMillis());
+
+            // Add/Overwrite all data that was added with the send command. ^MB
+            for (Map.Entry<String, Object> entry: event.getData().entrySet()) {
+                dataObj.put(entry.getKey(), entry.getValue());
+            }
+
+            hitObj.put("tp", event.getTypeData());
+            hitObj.put("ht", System.currentTimeMillis());
 
             if (hitsData != null && hitsData.size() > 0) {
                 for (Map.Entry<String, Object> entry: hitsData.entrySet()) {
-                    json.put(entry.getKey(), entry.getValue());
+                    String key = entry.getKey();
+                    Object value = entry.getValue();
+
+                    if (isSpecialKey(key, event.getType())){
+                        hitObj.put(key, value);
+                    } else {
+                        dataObj.put(key, value);
+                    }
                 }
             }
+
+            hitObj.put("data", dataObj);
+
         } catch (JSONException e) {
             Log.e(TAG, "getHitsInfo - " + e.getMessage());
         }
 
-        return json;
+        return hitObj;
     }
 
-    private JSONObject getSystemInfo(Config config) {
+    private JSONObject getSystemInfo(Config config, Event event) {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
             json.put("tv", "6.0." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
-            json.put("is", hasValidGeoLocation() ? 0 : 1);
+            json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
             json.put("sid", config.getSiteId());
             json.put("ns", "default");
