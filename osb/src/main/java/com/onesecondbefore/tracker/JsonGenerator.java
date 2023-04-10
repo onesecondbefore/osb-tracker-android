@@ -23,6 +23,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
@@ -34,15 +35,17 @@ final class JsonGenerator {
 
     private final Context mContext;
     private Map<String, Object> mSetDataObject;
+    private ArrayList<Map<String, Object>> mIds;
 
     JsonGenerator(Context context) {
         this.mContext = context;
     }
 
     public JSONObject generate(Config config, Event event, String eventKey,
-        Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent, String viewId, Map<String, Object> setDataObject) {
+                               Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent, String viewId, ArrayList<Map<String, Object>> ids, Map<String, Object> setDataObject) {
 
         mSetDataObject = setDataObject;
+        mIds = ids;
 
         // Get Hits Info
         JSONObject hitJson = getHitsInfo(event, hitsData);
@@ -65,7 +68,7 @@ final class JsonGenerator {
             eventJson.accumulate("hits", hits);
             eventJson.put("pg", getPageInfo(viewId));
             eventJson.put("consent",  new JSONArray(Arrays.asList(consent)));
-//            eventJson.put("ids", idsInfoJson);
+            eventJson.put("ids", new JSONArray(mIds));
 
 
             if (eventKey != null && !eventKey.isEmpty() && eventData != null && eventData.size() > 0) {
@@ -232,7 +235,6 @@ final class JsonGenerator {
 
         return json;
     }
-
 
     private Point getWindowSize() {
         WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);

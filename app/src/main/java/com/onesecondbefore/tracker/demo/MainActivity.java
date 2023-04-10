@@ -93,6 +93,21 @@ public class MainActivity extends AppCompatActivity {
         itemData[1] = item2;
 
         osb.set(OSB.SetType.ITEM, itemData);
+
+        Map<String, Object> ids1 = new HashMap<>();
+        ids1.put("key", "a3");
+        ids1.put("value", "12345");
+
+        Map<String, Object> ids2 = new HashMap<>();
+        ids2.put("key", "b4");
+        ids2.put("value", "6789");
+
+        ArrayList<Map<String, Object>> idsList = new ArrayList<>();
+        idsList.add(ids1);
+        idsList.add(ids2);
+
+        osb.setIds(idsList);
+
         try {
             Map<String, Object> eventData = getEventData(hitType);
 

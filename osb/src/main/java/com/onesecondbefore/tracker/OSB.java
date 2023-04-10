@@ -12,6 +12,8 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 
 import org.json.JSONObject;
 
+import java.sql.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +35,9 @@ public final class OSB implements LifecycleObserver {
     private String mEventKey = null;
     private Map<String, Object> mEventData = null;
     private Map<String, Object> mHitsData = null;
-    private Map<String, Object> mSetDataObject = new HashMap<String, Object>();
+    private Map<String, Object> mSetDataObject = new HashMap<>();
+    private ArrayList<Map<String, Object>> mIds = new ArrayList<>();
+
 
     private static final String SPIdentifier = "osb-shared-preferences";
     private static final String SPConsentKey = "osb-consent";
@@ -129,17 +133,15 @@ public final class OSB implements LifecycleObserver {
         mSetDataObject.put(type.name(), data);
     }
 
-//    public func set(data: [String: Any]) {
-//        hitsData = data
-//    }
-//
-//    public func setIds(data: [String: Any]) {
-//        setIds(data: [data])
-//    }
-//
-//    public func setIds(data: [[String: Any]]) {
-//        ids = data
-//    }
+    public void setIds(Map<String, Object> data) {
+        ArrayList<Map<String, Object>> arr = new ArrayList<>();
+        arr.add(data);
+        setIds(arr);
+    }
+
+    public void setIds(ArrayList<Map<String, Object>> data) {
+        mIds = data;
+    }
 
     public void setConsent(String data) { setConsent(new String[]{data}); }
 
@@ -350,7 +352,7 @@ public final class OSB implements LifecycleObserver {
                 public void run() {
                     JsonGenerator generator = new JsonGenerator(mContext);
                     JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData,
-                            mHitsData, getConsent(), getViewId(event), mSetDataObject);
+                            mHitsData, getConsent(), getViewId(event), mIds, mSetDataObject);
                     Log.d(TAG, "jsonData: " + jsonData.toString());
                     mQueue.addToQueue(mConfig.getServerUrl(), jsonData);
                 }
