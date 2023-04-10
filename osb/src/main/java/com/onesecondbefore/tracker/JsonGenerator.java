@@ -109,7 +109,7 @@ final class JsonGenerator {
             json.put("st", System.currentTimeMillis());
             json.put("tv", "6.0." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
-            json.put("is", 0);
+            json.put("is", hasValidGeoLocation() ? 0 : 1);
             json.put("aid", config.getAccountId());
             json.put("sid", config.getSiteId());
             json.put("ns", "default");
@@ -135,7 +135,7 @@ final class JsonGenerator {
             json.put("conn", this.getNetworkType());
             json.put("mem", this.getDiskFreeMem());
 
-            if (event.isGpsEnabled() && event.getLatitude() != 0 && event.getLongitude() != 0) {
+            if (hasValidGeoLocation(event)) {
                 JSONObject geoJson = new JSONObject();
                 geoJson.put("latitude", event.getLatitude());
                 geoJson.put("longitude", event.getLongitude());
@@ -238,7 +238,7 @@ final class JsonGenerator {
         return convertBytesToString(freeMem);
     }
 
-    public String convertBytesToString(long totalBytes) {
+    private String convertBytesToString(long totalBytes) {
         String[] symbols = new String[] {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
         long scale = 1L;
         for (String symbol : symbols) {
@@ -249,5 +249,22 @@ final class JsonGenerator {
             scale *= 1024L;
         }
         return "0 B";
+    }
+
+    private Boolean isSpecialKey(String key, OSB.HitType hitType) {
+        switch (hitType) {
+            case EVENT:
+                return key == "category" || key == "value" || key == "label" || key == "action";
+            case AGGREGATE:
+                return key == "scope" || key == "name" || key == "value" || key == "aggregate";
+            case SCREENVIEW:
+                return key == "sn" || key == "cn";
+            default:
+                return false;
+        }
+    }
+
+    private Boolean hasValidGeoLocation(Event event) {
+        return (event.isGpsEnabled() && event.getLatitude() != 0 && event.getLongitude() != 0);
     }
 }
