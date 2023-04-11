@@ -2,9 +2,6 @@ package com.onesecondbefore.tracker;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -53,8 +50,6 @@ final class JsonGenerator {
         hits.put(hitJson);
 
 
-
-
 //        // Get Page Info
 //        JSONObject pageInfoJson = getPageInfo(event);
 //        // Get Ids Info
@@ -67,13 +62,13 @@ final class JsonGenerator {
             eventJson.put("dv", getDeviceInfo(event));
             eventJson.accumulate("hits", hits);
             eventJson.put("pg", getPageInfo(viewId));
-            eventJson.put("consent",  new JSONArray(Arrays.asList(consent)));
+            eventJson.put("consent", new JSONArray(Arrays.asList(consent)));
             eventJson.put("ids", new JSONArray(mIds));
 
 
             if (eventKey != null && !eventKey.isEmpty() && eventData != null && eventData.size() > 0) {
                 JSONObject eventDataJson = new JSONObject();
-                for (Map.Entry<String, Object> entry: eventData.entrySet()) {
+                for (Map.Entry<String, Object> entry : eventData.entrySet()) {
                     eventDataJson.put(entry.getKey(), entry.getValue());
                 }
                 eventJson.put(eventKey, eventDataJson);
@@ -94,8 +89,8 @@ final class JsonGenerator {
         }
 
         try {
-            return (HashMap<String,Object>[])mSetDataObject.get(type.name());
-        } catch(ClassCastException e) {
+            return (HashMap<String, Object>[]) mSetDataObject.get(type.name());
+        } catch (ClassCastException e) {
             return null;
         }
     }
@@ -105,7 +100,7 @@ final class JsonGenerator {
         JSONObject dataObj = new JSONObject();
 
         try {
-            switch (event.getType()){
+            switch (event.getType()) {
                 case PAGEVIEW:
                     Map<String, Object>[] pageData = getSetDataForType(OSB.SetType.PAGE);
                     if (pageData != null) {
@@ -133,7 +128,7 @@ final class JsonGenerator {
                 case ACTION:
                     Map<String, Object>[] actionData = getSetDataForType(OSB.SetType.ITEM);
                     if (actionData != null) {
-                       hitObj.put("items", new JSONArray(Arrays.asList(actionData)));
+                        hitObj.put("items", new JSONArray(Arrays.asList(actionData)));
                     }
                     break;
                 case VIEWABLE_IMPRESSION:
@@ -151,7 +146,7 @@ final class JsonGenerator {
             }
 
             // Add/Overwrite all data that was added with the send command. ^MB
-            for (Map.Entry<String, Object> entry: event.getData().entrySet()) {
+            for (Map.Entry<String, Object> entry : event.getData().entrySet()) {
                 dataObj.put(entry.getKey(), entry.getValue());
             }
 
@@ -159,11 +154,11 @@ final class JsonGenerator {
             hitObj.put("ht", System.currentTimeMillis());
 
             if (hitsData != null && hitsData.size() > 0) {
-                for (Map.Entry<String, Object> entry: hitsData.entrySet()) {
+                for (Map.Entry<String, Object> entry : hitsData.entrySet()) {
                     String key = entry.getKey();
                     Object value = entry.getValue();
 
-                    if (isSpecialKey(key, event.getType())){
+                    if (isSpecialKey(key, event.getType())) {
                         hitObj.put(key, value);
                     } else {
                         dataObj.put(key, value);
@@ -300,12 +295,12 @@ final class JsonGenerator {
         try {
             StatFs stat = new StatFs(Environment.getRootDirectory().getPath());
             if (Build.VERSION.SDK_INT >= 18) {
-                 freeMem = (stat. getAvailableBlocksLong() * stat.getBlockSizeLong());
+                freeMem = (stat.getAvailableBlocksLong() * stat.getBlockSizeLong());
             } else {
                 // Noinspection deprecation
                 int blockSizeInternal = stat.getBlockSize();
                 int availBlocksInternal = stat.getAvailableBlocks();
-                freeMem = ((long)availBlocksInternal *  (long)blockSizeInternal);
+                freeMem = ((long) availBlocksInternal * (long) blockSizeInternal);
             }
         } catch (Exception e) {
             Log.e(TAG, "getDiskUsed - " + e.getMessage());
@@ -315,12 +310,12 @@ final class JsonGenerator {
     }
 
     private String convertBytesToString(long totalBytes) {
-        String[] symbols = new String[] {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
+        String[] symbols = new String[]{"B", "KB", "MB", "GB", "TB", "PB", "EB"};
         long scale = 1L;
         for (String symbol : symbols) {
             if (totalBytes < (scale * 1024L)) {
                 return String.format("%s %s", new DecimalFormat("#.##").
-                        format((double)totalBytes / scale), symbol);
+                        format((double) totalBytes / scale), symbol);
             }
             scale *= 1024L;
         }

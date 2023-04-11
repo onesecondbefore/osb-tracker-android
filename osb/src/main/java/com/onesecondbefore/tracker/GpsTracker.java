@@ -90,7 +90,7 @@ class GpsTracker implements LocationListener {
                 }
 
                 // if GPS Enabled get lat/long using GPS Services
-                if (isGPSEnabled && location ==  null) {
+                if (isGPSEnabled && location == null) {
                     //check the network permission
                     if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                             ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -121,9 +121,9 @@ class GpsTracker implements LocationListener {
     /**
      * Stop using GPS listener
      * Calling this function will stop using GPS in your app
-     * */
+     */
     public void stopTracker() {
-        if(locationManager != null){
+        if (locationManager != null) {
             locationManager.removeUpdates(this);
             locationManager = null;
             Log.d(TAG, "Stopped");
@@ -132,22 +132,23 @@ class GpsTracker implements LocationListener {
 
     /**
      * Function to get latitude
-     * */
-    public double getLatitude(){
+     */
+    public double getLatitude() {
         return location != null ? location.getLatitude() : 0;
     }
 
     /**
      * Function to get longitude
-     * */
-    public double getLongitude(){
+     */
+    public double getLongitude() {
         return location != null ? location.getLongitude() : 0;
     }
 
     /**
      * Function to check GPS/wifi enabled
+     *
      * @return boolean
-     * */
+     */
     public boolean canGetLocation() {
         return this.canGetLocation;
     }

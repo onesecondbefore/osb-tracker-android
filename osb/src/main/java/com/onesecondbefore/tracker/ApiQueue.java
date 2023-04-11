@@ -8,7 +8,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.util.Log;
+
 import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
@@ -56,8 +58,8 @@ class ApiQueue {
         String appVersion = "unknown";
 
         boolean isEmulator = product.equals("sdk");
-        String deviceBrand =  isEmulator ? "Android" : Build.BRAND;
-        String deviceModel =  isEmulator ? "Emulator" : Build.MODEL;
+        String deviceBrand = isEmulator ? "Android" : Build.BRAND;
+        String deviceModel = isEmulator ? "Emulator" : Build.MODEL;
 
 
         int sdkVersion = Build.VERSION.SDK_INT;
@@ -67,7 +69,7 @@ class ApiQueue {
             PackageInfo pInfo = this.mContext.getPackageManager().getPackageInfo(packageName, 0);
             appVersion = pInfo.versionName;
             ApplicationInfo applicationInfo = this.mContext.getPackageManager().getApplicationInfo(packageName, 0);
-            appName = (String)((applicationInfo != null) ? this.mContext.getPackageManager().getApplicationLabel(applicationInfo) : "unknown");
+            appName = (String) ((applicationInfo != null) ? this.mContext.getPackageManager().getApplicationLabel(applicationInfo) : "unknown");
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(TAG, "getAppInfo - " + e.getMessage());
         }

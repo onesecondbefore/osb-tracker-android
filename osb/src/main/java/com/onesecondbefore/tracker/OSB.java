@@ -12,7 +12,6 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 
 import org.json.JSONObject;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,8 +42,6 @@ public final class OSB implements LifecycleObserver {
     private static final String SPConsentKey = "osb-consent";
 
 
-
-
     public enum HitType {
         IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING, VIEWABLE_IMPRESSION, AGGREGATE
     }
@@ -54,7 +51,7 @@ public final class OSB implements LifecycleObserver {
     }
 
     public enum AggregateType {
-       MAX, MIN, COUNT, SUM, AVERAGE
+        MAX, MIN, COUNT, SUM, AVERAGE
     }
 
     @Override
@@ -97,6 +94,7 @@ public final class OSB implements LifecycleObserver {
     public void config(Context context, String accountId, String url) {
         config(context, accountId, url, null);
     }
+
     public void config(Context context, String accountId, String url, String siteId) {
         clear();
 
@@ -113,7 +111,6 @@ public final class OSB implements LifecycleObserver {
         mIsInitialized = true;
         Log.i(TAG, "OSB - Initialized");
     }
-
 
 
     public void debug(boolean isEnabled) {
@@ -143,7 +140,9 @@ public final class OSB implements LifecycleObserver {
         mIds = data;
     }
 
-    public void setConsent(String data) { setConsent(new String[]{data}); }
+    public void setConsent(String data) {
+        setConsent(new String[]{data});
+    }
 
     public void setConsent(String[] data) {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
@@ -219,11 +218,11 @@ public final class OSB implements LifecycleObserver {
 
     public void sendAggregateEvent(String scope, String name, AggregateType aggregateType, Double value) {
         Map<String, Object> actionData = new HashMap<>();
-        if (!TextUtils.isEmpty(scope)){
+        if (!TextUtils.isEmpty(scope)) {
             actionData.put("scope", scope);
         }
 
-        if (!TextUtils.isEmpty(name)){
+        if (!TextUtils.isEmpty(name)) {
             actionData.put("name", name);
         }
 
@@ -242,7 +241,7 @@ public final class OSB implements LifecycleObserver {
     }
 
     public void send(HitType type, String actionType,
-                          Map<String, Object> data) {
+                     Map<String, Object> data) {
         if (mIsInitialized) {
             mInstance.sendEventToQueue(type, actionType, data);
         } else {
@@ -275,9 +274,9 @@ public final class OSB implements LifecycleObserver {
     }
 
     /* Deprecated Functions */
+
     /**
-     * @deprecated
-     * This enum is renamed to 'HitType'
+     * @deprecated This enum is renamed to 'HitType'
      * <p> Use {@link HitType} instead. </p>
      */
     public enum EventType {
@@ -285,16 +284,15 @@ public final class OSB implements LifecycleObserver {
     }
 
     /**
-     * @deprecated
-     * This method is renamed to 'config'
+     * @deprecated This method is renamed to 'config'
      * <p> Use {@link OSB#config(Context, String, String, String)} instead. </p>
      */
     public void create(Context context, String accountId, String url) {
         config(context, accountId, url, null);
     }
+
     /**
-     * @deprecated
-     * This method is renamed to 'config'
+     * @deprecated This method is renamed to 'config'
      * <p> Use {@link OSB#config(Context, String, String, String)} instead. </p>
      */
     public void create(Context context, String accountId, String url, String siteId) {
@@ -302,24 +300,21 @@ public final class OSB implements LifecycleObserver {
     }
 
     /**
-     * @deprecated
-     * This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
+     * @deprecated This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
      */
     public void sendPageView(String url, String title) {
         sendPageView(url, title, null, null);
     }
 
     /**
-     * @deprecated
-     * This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
+     * @deprecated This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
      */
     public void sendPageView(String url, String title, String referrer) {
         sendPageView(url, title, referrer, null);
     }
 
     /**
-     * @deprecated
-     * This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
+     * @deprecated This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
      */
     public void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
         if (data == null) {
@@ -351,7 +346,7 @@ public final class OSB implements LifecycleObserver {
             this.startGpsTracker();
 
             final Event event = new Event(type, actionType, data,
-                mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
+                    mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
             Thread t = new Thread(new Runnable() {
                 public void run() {
                     JsonGenerator generator = new JsonGenerator(mContext);
@@ -371,14 +366,14 @@ public final class OSB implements LifecycleObserver {
     }
 
     private String getViewId(Event event) {
-        if (event.getType() == HitType.PAGEVIEW){
+        if (event.getType() == HitType.PAGEVIEW) {
             mViewId = calculateViewId();
         }
         return mViewId;
     }
 
     private String aggregateTypeToString(AggregateType aggregateType) {
-        switch (aggregateType){
+        switch (aggregateType) {
             case MAX:
                 return "max";
             case MIN:

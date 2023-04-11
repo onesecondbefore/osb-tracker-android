@@ -25,7 +25,7 @@ public class Event {
         }
     }
 
-    public String getNamespace()  {
+    public String getNamespace() {
         return mNamespace;
     }
 
@@ -37,7 +37,7 @@ public class Event {
         if (mType == OSB.HitType.SCREENVIEW) {
             return "screenview";
         } else if (mType == OSB.HitType.PAGEVIEW) {
-           return "pageview";
+            return "pageview";
         } else if (mType == OSB.HitType.ACTION) {
             return "ac";
         } else if (mType == OSB.HitType.IDS) {
@@ -96,18 +96,18 @@ public class Event {
     }
 
     public String[] getDefaultEventKeys() {
-        String[] keys = new String[] {};
+        String[] keys = new String[]{};
         if (mType == OSB.HitType.EVENT || mType == OSB.HitType.EXCEPTION ||
                 mType == OSB.HitType.SOCIAL || mType == OSB.HitType.TIMING) {
-            keys = new String[] { "category", "action", "label", "value" };
+            keys = new String[]{"category", "action", "label", "value"};
         } else if (mType == OSB.HitType.SCREENVIEW) {
-            keys = new String[] { "id", "name" };
+            keys = new String[]{"id", "name"};
         } else if (mType == OSB.HitType.PAGEVIEW) {
-            keys = new String[] { "id", "title", "viewId", "url", "referrer" };
+            keys = new String[]{"id", "title", "viewId", "url", "referrer"};
         } else if (mType == OSB.HitType.ACTION) {
-            keys = new String[] { "id", "tax", "discount", "currencyCode", "revenue" };
+            keys = new String[]{"id", "tax", "discount", "currencyCode", "revenue"};
         } else if (mType == OSB.HitType.IDS) {
-            keys = new String[] { "key", "value", "label" };
+            keys = new String[]{"key", "value", "label"};
         }
 
         return keys;

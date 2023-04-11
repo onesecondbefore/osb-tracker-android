@@ -11,11 +11,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.onesecondbefore.tracker.OSB;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -42,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String serverUrl = mEditServerUrl.getText().toString();
-        if ( serverUrl.isEmpty()) {
+        if (serverUrl.isEmpty()) {
             serverUrl = "https://c.onesecondbefore.com";
         }
 
@@ -78,15 +76,15 @@ public class MainActivity extends AppCompatActivity {
         item1.put("id", "sku123");
         item1.put("name", "Apple iPhone 14 Pro");
         item1.put("category", "mobile");
-        item1.put("price",  1234.56);
-        item1.put("quantity",  1);
+        item1.put("price", 1234.56);
+        item1.put("quantity", 1);
 
         Map<String, Object> item2 = new HashMap<>();
         item2.put("id", "sku234");
         item2.put("name", "Samsung Galaxy S22");
         item2.put("category", "mobile");
-        item2.put("price",  1034.56);
-        item2.put("quantity",  1);
+        item2.put("price", 1034.56);
+        item2.put("quantity", 1);
 
         Map<String, Object>[] itemData = new HashMap[2];
         itemData[0] = item1;
@@ -188,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (type == OSB.HitType.SCREENVIEW) {
             eventData.put("id", "ink001");
             eventData.put("title", "Welcome to the profileScreen");
-        }  else if (type == OSB.HitType.EVENT) {
+        } else if (type == OSB.HitType.EVENT) {
             eventData.put("category", "category1");
             eventData.put("action", "action1");
             eventData.put("value", 30.0);
@@ -200,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
             eventData.put("tax", (2269.12 * 0.21));
             eventData.put("shipping", 100);
             eventData.put("affiliation", "partner_funnel");
-        }  else if (type == OSB.HitType.EXCEPTION) {
+        } else if (type == OSB.HitType.EXCEPTION) {
             eventData.put("category", "JS Error");
             eventData.put("label", "ReferenceError: bla is not defined");
             eventData.put("userId", "test@demo.com");
