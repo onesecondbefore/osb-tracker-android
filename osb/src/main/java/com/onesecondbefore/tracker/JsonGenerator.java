@@ -49,13 +49,6 @@ final class JsonGenerator {
         JSONArray hits = new JSONArray();
         hits.put(hitJson);
 
-
-//        // Get Page Info
-//        JSONObject pageInfoJson = getPageInfo(event);
-//        // Get Ids Info
-//        JSONObject idsInfoJson = getIdsInfo(event);
-
-
         JSONObject eventJson = new JSONObject();
         try {
             eventJson.put("sy", getSystemInfo(config, event));
@@ -126,19 +119,18 @@ final class JsonGenerator {
                     }
                     break;
                 case ACTION:
-                    Map<String, Object>[] actionData = getSetDataForType(OSB.SetType.ITEM);
+                    Map<String, Object>[] actionData = getSetDataForType(OSB.SetType.ACTION);
                     if (actionData != null) {
-                        hitObj.put("items", new JSONArray(Arrays.asList(actionData)));
-                    }
-                    break;
-                case VIEWABLE_IMPRESSION:
-                    Map<String, Object>[] viData = getSetDataForType(OSB.SetType.VIEWABLE_IMPRESSION);
-                    if (viData != null) {
-                        for (Map<String, Object> viewableImpression : viData) {
-                            for (Map.Entry<String, Object> entry : viewableImpression.entrySet()) {
+                        for (Map<String, Object> actionObj : actionData) {
+                            for (Map.Entry<String, Object> entry : actionObj.entrySet()) {
                                 dataObj.put(entry.getKey(), entry.getValue());
                             }
                         }
+                    }
+
+                    Map<String, Object>[] itemData = getSetDataForType(OSB.SetType.ITEM);
+                    if (itemData != null) {
+                        hitObj.put("items", new JSONArray(Arrays.asList(itemData)));
                     }
                     break;
                 default:
@@ -223,7 +215,7 @@ final class JsonGenerator {
     private JSONObject getPageInfo(String viewId) {
         JSONObject json = new JSONObject();
         try {
-            json.put("view_id", viewId);
+            json.put("vid", viewId);
         } catch (JSONException e) {
             Log.e(TAG, "getPageInfo - " + e.getMessage());
         }
