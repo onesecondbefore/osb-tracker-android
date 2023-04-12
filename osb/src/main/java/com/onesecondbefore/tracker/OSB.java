@@ -47,7 +47,7 @@ public final class OSB implements LifecycleObserver {
     }
 
     public enum SetType {
-        ACTION, EVENT, ITEM, PAGE, VIEWABLE_IMPRESSION, NONE
+        ACTION, EVENT, ITEM, PAGE
     }
 
     public enum AggregateType {
@@ -181,6 +181,24 @@ public final class OSB implements LifecycleObserver {
         send(HitType.SCREENVIEW, null, data);
     }
 
+    public void sendPageView(String url, String title) {
+        sendPageView(url, title, null, null);
+    }
+
+    public void sendPageView(String url, String title, String referrer) {
+        sendPageView(url, title, referrer, null);
+    }
+
+    public void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
+        if (data == null) {
+            data = new HashMap<>();
+        }
+        data.put("url", url);
+        data.put("ttl", title);
+        data.put("ref", referrer);
+        send(HitType.PAGEVIEW, null, data);
+    }
+
     public void sendEvent(String category) {
         sendEvent(category, null, null, null, null);
     }
@@ -299,34 +317,6 @@ public final class OSB implements LifecycleObserver {
         config(context, accountId, url, siteId);
     }
 
-    /**
-     * @deprecated This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
-     */
-    public void sendPageView(String url, String title) {
-        sendPageView(url, title, null, null);
-    }
-
-    /**
-     * @deprecated This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
-     */
-    public void sendPageView(String url, String title, String referrer) {
-        sendPageView(url, title, referrer, null);
-    }
-
-    /**
-     * @deprecated This method is no longer in use, either use sendScreenView or use send() with HitType.pageview
-     */
-    public void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
-        if (data == null) {
-            data = new HashMap<>();
-        }
-        data.put("url", url);
-        data.put("ttl", title);
-        data.put("ref", referrer);
-        send(HitType.PAGEVIEW, null, data);
-    }
-
-
     /* Private Functions */
     private void startGpsTracker() {
         if (mContext == null) {
@@ -352,7 +342,6 @@ public final class OSB implements LifecycleObserver {
                     JsonGenerator generator = new JsonGenerator(mContext);
                     JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData,
                             mHitsData, getConsent(), getViewId(event), mIds, mSetDataObject);
-                    Log.d(TAG, "jsonData: " + jsonData.toString());
                     mQueue.addToQueue(mConfig.getServerUrl(), jsonData);
                 }
             });
