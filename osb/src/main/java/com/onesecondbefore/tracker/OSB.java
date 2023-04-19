@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -231,7 +232,7 @@ public final class OSB implements LifecycleObserver {
         if (value != null) {
             data.put("value", value);
         }
-        send(HitType.EVENT, null, data);
+        send(HitType.EVENT, data);
     }
 
     public void sendAggregateEvent(String scope, String name, AggregateType aggregateType, Double value) {
@@ -244,7 +245,7 @@ public final class OSB implements LifecycleObserver {
             actionData.put("name", name);
         }
 
-        actionData.put("value", String.format("%.1f", value));
+        actionData.put("value", String.format(Locale.ENGLISH, "%.1f", value));
         actionData.put("aggregate", aggregateTypeToString(aggregateType));
 
         send(HitType.AGGREGATE, actionData);
@@ -263,7 +264,7 @@ public final class OSB implements LifecycleObserver {
         if (mIsInitialized) {
             mInstance.sendEventToQueue(type, actionType, data);
         } else {
-            throw new IllegalArgumentException("Initialize OSB Tracker first with OSB osb = OSB.initialize(this); osb.create(\"...\");");
+            throw new IllegalArgumentException("Initialize OSB Tracker first with: OSB osb = OSB.getInstance(); osb.config(...);");
         }
     }
 

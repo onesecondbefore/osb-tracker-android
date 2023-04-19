@@ -58,11 +58,10 @@ class ApiQueue {
         String appVersion = "unknown";
 
         boolean isEmulator = product.equals("sdk");
-        String deviceBrand = isEmulator ? "Android" : Build.BRAND;
+        String deviceBrand = isEmulator ? null : Build.BRAND;
         String deviceModel = isEmulator ? "Emulator" : Build.MODEL;
 
-
-        int sdkVersion = Build.VERSION.SDK_INT;
+        String release = Build.VERSION.RELEASE;
 
         try {
             String packageName = this.mContext.getPackageName();
@@ -74,7 +73,7 @@ class ApiQueue {
             Log.e(TAG, "getAppInfo - " + e.getMessage());
         }
 
-        return appName + "/" + appVersion + " (Linux; Android " + sdkVersion + "; " + deviceBrand + " " + deviceModel + ")";
+        return appName + "/" + appVersion + " (Linux; Android " + release + "; " + deviceBrand + " " + deviceModel + ")";
     }
 
     public void destroy() {

@@ -5,7 +5,6 @@ import java.util.Hashtable;
 
 public class Event {
     private OSB.HitType mType = OSB.HitType.EVENT;
-    private String mNamespace = "default";
     private Map<String, Object> mData = new Hashtable<>();
     private String mSubType = "";
     private boolean mIsGpsEnabled = false;
@@ -23,10 +22,6 @@ public class Event {
         if (data != null) {
             mData = data;
         }
-    }
-
-    public String getNamespace() {
-        return mNamespace;
     }
 
     public OSB.HitType getType() {

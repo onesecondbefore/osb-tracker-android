@@ -19,7 +19,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +31,6 @@ final class JsonGenerator {
 
     private final Context mContext;
     private Map<String, Object> mSetDataObject;
-    private ArrayList<Map<String, Object>> mIds;
 
     JsonGenerator(Context context) {
         this.mContext = context;
@@ -42,7 +40,6 @@ final class JsonGenerator {
                                Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent, String viewId, ArrayList<Map<String, Object>> ids, Map<String, Object> setDataObject) {
 
         mSetDataObject = setDataObject;
-        mIds = ids;
 
         // Get Hits Info
         JSONObject hitJson = getHitsInfo(event, hitsData);
@@ -56,7 +53,7 @@ final class JsonGenerator {
             eventJson.accumulate("hits", hits);
             eventJson.put("pg", getPageInfo(viewId));
             eventJson.put("consent", new JSONArray(Arrays.asList(consent)));
-            eventJson.put("ids", new JSONArray(mIds));
+            eventJson.put("ids", new JSONArray(ids));
 
 
             if (eventKey != null && !eventKey.isEmpty() && eventData != null && eventData.size() > 0) {
@@ -138,8 +135,17 @@ final class JsonGenerator {
             }
 
             // Add/Overwrite all data that was added with the send command. ^MB
-            for (Map.Entry<String, Object> entry : event.getData().entrySet()) {
-                dataObj.put(entry.getKey(), entry.getValue());
+            if (event.getData() != null) {
+                for (Map.Entry<String, Object> entry : event.getData().entrySet()) {
+                    String key = entry.getKey();
+                    Object value = entry.getValue();
+
+                    if (isSpecialKey(key, event.getType())) {
+                        hitObj.put(key, value);
+                    } else {
+                        dataObj.put(key, value);
+                    }
+                }
             }
 
             hitObj.put("tp", event.getTypeData());
@@ -158,7 +164,9 @@ final class JsonGenerator {
                 }
             }
 
-            hitObj.put("data", dataObj);
+            if (dataObj.length() > 0) {
+                hitObj.put("data", dataObj);
+            }
 
         } catch (JSONException e) {
             Log.e(TAG, "getHitsInfo - " + e.getMessage());
@@ -176,7 +184,6 @@ final class JsonGenerator {
             json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
             json.put("sid", config.getSiteId());
-            json.put("ns", "default");
             json.put("tt", "android-post");
         } catch (JSONException e) {
             Log.e(TAG, "getSystemInfo - " + e.getMessage());
@@ -239,7 +246,7 @@ final class JsonGenerator {
 
     private String getLanguage() {
         Locale locale = mContext.getResources().getConfiguration().locale;
-        return locale.getLanguage() + "_" + locale.getCountry();
+        return locale.getLanguage() + "-" + locale.getCountry();
     }
 
     @SuppressLint("HardwareIds")
@@ -271,18 +278,17 @@ final class JsonGenerator {
             return null;
         }
 
-        String clientId = null;
         try {
             AdvertisingIdClient.Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
-            clientId = adInfo != null ? adInfo.getId() : null;
+            return adInfo != null ? adInfo.getId() : null;
         } catch (Exception e) {
             Log.e(TAG, "getAdvertisingClientId - " + e.getMessage());
         }
 
-        return clientId;
+        return null;
     }
 
-    private String getDiskFreeMem() {
+    private long getDiskFreeMem() {
         long freeMem = 0;
         try {
             StatFs stat = new StatFs(Environment.getRootDirectory().getPath());
@@ -298,30 +304,17 @@ final class JsonGenerator {
             Log.e(TAG, "getDiskUsed - " + e.getMessage());
         }
 
-        return convertBytesToString(freeMem);
-    }
-
-    private String convertBytesToString(long totalBytes) {
-        String[] symbols = new String[]{"B", "KB", "MB", "GB", "TB", "PB", "EB"};
-        long scale = 1L;
-        for (String symbol : symbols) {
-            if (totalBytes < (scale * 1024L)) {
-                return String.format("%s %s", new DecimalFormat("#.##").
-                        format((double) totalBytes / scale), symbol);
-            }
-            scale *= 1024L;
-        }
-        return "0 B";
+        return freeMem;
     }
 
     private Boolean isSpecialKey(String key, OSB.HitType hitType) {
         switch (hitType) {
             case EVENT:
-                return key == "category" || key == "value" || key == "label" || key == "action";
+                return key.equals("category") || key.equals("value") || key.equals("label") || key.equals("action");
             case AGGREGATE:
-                return key == "scope" || key == "name" || key == "value" || key == "aggregate";
+                return key.equals("scope") || key.equals("name") || key.equals("value") || key.equals("aggregate");
             case SCREENVIEW:
-                return key == "sn" || key == "cn";
+                return key.equals("sn") || key.equals("cn");
             default:
                 return false;
         }
