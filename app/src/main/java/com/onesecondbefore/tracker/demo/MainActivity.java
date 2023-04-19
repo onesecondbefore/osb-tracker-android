@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
             } else if (hitType == OSB.HitType.EVENT) {
                 osb.sendEvent("event category", "event action", "event label", "1.00");
             } else if (hitType == OSB.HitType.AGGREGATE) {
-                osb.sendAggregateEvent("scope", "scrolledepth", OSB.AggregateType.MAX, 0.8);
+                osb.sendAggregateEvent("scope", "scrolldepth", OSB.AggregateType.MAX, 0.8);
             } else if (hitType == OSB.HitType.VIEWABLE_IMPRESSION) {
                 osb.send(OSB.HitType.VIEWABLE_IMPRESSION, eventData);
             }
@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
             hitType = OSB.HitType.TIMING;
         } else if (type.equalsIgnoreCase("aggregate")) {
             hitType = OSB.HitType.AGGREGATE;
-        } else if (type.equalsIgnoreCase("impression"))
+        } else if (type.equalsIgnoreCase("viewable_impression"))
             hitType = OSB.HitType.VIEWABLE_IMPRESSION;
         return hitType;
     }
