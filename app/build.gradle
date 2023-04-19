@@ -24,6 +24,10 @@ android {
         }
     }
     namespace 'com.onesecondbefore.tracker.demo'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
 }
 
 dependencies {
