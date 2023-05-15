@@ -98,7 +98,7 @@ public class Event {
         } else if (mType == OSB.HitType.SCREENVIEW) {
             keys = new String[]{"id", "name"};
         } else if (mType == OSB.HitType.PAGEVIEW) {
-            keys = new String[]{"id", "title", "viewId", "url", "referrer"};
+            keys = new String[]{"id", "title", "viewId", "url", "referrer", "osc_id", "osc_label", "oss_keyword", "oss_category", "oss_total_results", "oss_results_per_page", "oss_current_page"};
         } else if (mType == OSB.HitType.ACTION) {
             keys = new String[]{"id", "tax", "discount", "currencyCode", "revenue"};
         } else if (mType == OSB.HitType.IDS) {
