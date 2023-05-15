@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -127,7 +128,13 @@ public final class OSB implements LifecycleObserver {
         mHitsData = data;
     }
 
-    public void set(SetType type, Map<String, Object>[] data) {
+    public void set(SetType type, Map<String, Object> data) {
+        List<Map<String, Object>> mData = new ArrayList<>();
+        mData.add(data);
+        set(type, mData);
+    }
+
+    public void set(SetType type, List<Map<String, Object>> data) {
         mSetDataObject.put(type.name(), data);
     }
 
@@ -212,11 +219,11 @@ public final class OSB implements LifecycleObserver {
         sendEvent(category, action, label, null, null);
     }
 
-    public void sendEvent(String category, String action, String label, String value) {
+    public void sendEvent(String category, String action, String label, Double value) {
         sendEvent(category, action, label, value, null);
     }
 
-    public void sendEvent(String category, String action, String label, String value, Map<String, Object> data) {
+    public void sendEvent(String category, String action, String label, Double value, Map<String, Object> data) {
         if (data == null) {
             data = new HashMap<>();
         }
@@ -230,12 +237,12 @@ public final class OSB implements LifecycleObserver {
             data.put("label", label);
         }
         if (value != null) {
-            data.put("value", value);
+            data.put("value", String.format(Locale.ENGLISH, "%.2f", value));
         }
         send(HitType.EVENT, data);
     }
 
-    public void sendAggregateEvent(String scope, String name, AggregateType aggregateType, Double value) {
+    public void sendAggregate(String scope, String name, AggregateType aggregateType, Double value) {
         Map<String, Object> actionData = new HashMap<>();
         if (!TextUtils.isEmpty(scope)) {
             actionData.put("scope", scope);
@@ -261,6 +268,10 @@ public final class OSB implements LifecycleObserver {
 
     public void send(HitType type, String actionType,
                      Map<String, Object> data) {
+        if (type == HitType.AGGREGATE) {
+            throw new IllegalArgumentException("Please use sendAggregate() instead of send(HitType.Aggregate, ...)");
+        }
+
         if (mIsInitialized) {
             mInstance.sendEventToQueue(type, actionType, data);
         } else {
@@ -283,8 +294,6 @@ public final class OSB implements LifecycleObserver {
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     private void onAppForegrounded() {
         Log.d(TAG, "App in foreground");
-
-        mViewId = calculateViewId();
         startGpsTracker();
 
         if (mQueue != null) {

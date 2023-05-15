@@ -14,6 +14,7 @@ import com.onesecondbefore.tracker.OSB;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -86,9 +87,9 @@ public class MainActivity extends AppCompatActivity {
         item2.put("price", 1034.56);
         item2.put("quantity", 1);
 
-        Map<String, Object>[] itemData = new HashMap[2];
-        itemData[0] = item1;
-        itemData[1] = item2;
+        List<Map<String, Object>> itemData = new ArrayList<>();
+        itemData.add(item1);
+        itemData.add(item2);
 
         osb.set(OSB.SetType.ITEM, itemData);
 
@@ -120,9 +121,9 @@ public class MainActivity extends AppCompatActivity {
             } else if (hitType == OSB.HitType.SCREENVIEW) {
                 osb.sendScreenView("Homepage", eventData);
             } else if (hitType == OSB.HitType.EVENT) {
-                osb.sendEvent("event category", "event action", "event label", "1.00");
+                osb.sendEvent("event category", "event action", "event label", 1.00);
             } else if (hitType == OSB.HitType.AGGREGATE) {
-                osb.sendAggregateEvent("scope", "scrolldepth", OSB.AggregateType.MAX, 0.8);
+                osb.sendAggregate("scope", "scrolldepth", OSB.AggregateType.MAX, 0.8);
             } else if (hitType == OSB.HitType.VIEWABLE_IMPRESSION) {
                 osb.send(OSB.HitType.VIEWABLE_IMPRESSION, eventData);
             }
