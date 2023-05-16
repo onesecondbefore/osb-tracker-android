@@ -22,6 +22,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -73,13 +74,12 @@ final class JsonGenerator {
 
     /* Private Functions */
 
-    private Map<String, Object>[] getSetDataForType(OSB.SetType type) {
+    private List<Map<String, Object>> getSetDataForType(OSB.SetType type) {
         if (mSetDataObject == null) {
             return null;
         }
-
         try {
-            return (HashMap<String, Object>[]) mSetDataObject.get(type.name());
+            return (List<Map<String, Object>>) mSetDataObject.get(type.name());
         } catch (ClassCastException e) {
             return null;
         }
@@ -92,7 +92,7 @@ final class JsonGenerator {
         try {
             switch (event.getType()) {
                 case PAGEVIEW:
-                    Map<String, Object>[] pageData = getSetDataForType(OSB.SetType.PAGE);
+                    List<Map<String, Object>> pageData = getSetDataForType(OSB.SetType.PAGE);
                     if (pageData != null) {
                         for (Map<String, Object> page : pageData) {
                             for (Map.Entry<String, Object> entry : page.entrySet()) {
@@ -102,7 +102,7 @@ final class JsonGenerator {
                     }
                     break;
                 case EVENT:
-                    Map<String, Object>[] eventData = getSetDataForType(OSB.SetType.EVENT);
+                    List<Map<String, Object>> eventData = getSetDataForType(OSB.SetType.EVENT);
                     if (eventData != null) {
                         for (Map<String, Object> eventObj : eventData) {
                             for (Map.Entry<String, Object> entry : eventObj.entrySet()) {
@@ -116,7 +116,7 @@ final class JsonGenerator {
                     }
                     break;
                 case ACTION:
-                    Map<String, Object>[] actionData = getSetDataForType(OSB.SetType.ACTION);
+                    List<Map<String, Object>> actionData = getSetDataForType(OSB.SetType.ACTION);
                     if (actionData != null) {
                         for (Map<String, Object> actionObj : actionData) {
                             for (Map.Entry<String, Object> entry : actionObj.entrySet()) {
@@ -125,9 +125,9 @@ final class JsonGenerator {
                         }
                     }
 
-                    Map<String, Object>[] itemData = getSetDataForType(OSB.SetType.ITEM);
+                    List<Map<String, Object>> itemData = getSetDataForType(OSB.SetType.ITEM);
                     if (itemData != null) {
-                        hitObj.put("items", new JSONArray(Arrays.asList(itemData)));
+                        hitObj.put("items", new JSONArray(itemData));
                     }
                     break;
                 default:
@@ -179,7 +179,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "6.0." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "6.1." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
