@@ -73,39 +73,49 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "action = " + action);
         Log.i(TAG, "hitType = " + hitType);
 
-        Map<String, Object> item1 = new HashMap<>();
-        item1.put("id", "sku123");
-        item1.put("name", "Apple iPhone 14 Pro");
-        item1.put("category", "mobile");
-        item1.put("price", 1234.56);
-        item1.put("quantity", 1);
+//        Map<String, Object> item1 = new HashMap<>();
+//        item1.put("id", "sku123");
+//        item1.put("name", "Apple iPhone 14 Pro");
+//        item1.put("category", "mobile");
+//        item1.put("price", 1234.56);
+//        item1.put("quantity", 1);
+//
+//        Map<String, Object> item2 = new HashMap<>();
+//        item2.put("id", "sku234");
+//        item2.put("name", "Samsung Galaxy S22");
+//        item2.put("category", "mobile");
+//        item2.put("price", 1034.56);
+//        item2.put("quantity", 1);
+//
+//        List<Map<String, Object>> itemData = new ArrayList<>();
+//        itemData.add(item1);
+//        itemData.add(item2);
+//
+//        osb.set(OSB.SetType.ITEM, itemData);
+//
+//        Map<String, Object> ids1 = new HashMap<>();
+//        ids1.put("key", "a3");
+//        ids1.put("value", "12345");
+//
+//        Map<String, Object> ids2 = new HashMap<>();
+//        ids2.put("key", "b4");
+//        ids2.put("value", "6789");
+//
+//        ArrayList<Map<String, Object>> idsList = new ArrayList<>();
+//        idsList.add(ids1);
+//        idsList.add(ids2);
 
-        Map<String, Object> item2 = new HashMap<>();
-        item2.put("id", "sku234");
-        item2.put("name", "Samsung Galaxy S22");
-        item2.put("category", "mobile");
-        item2.put("price", 1034.56);
-        item2.put("quantity", 1);
+//        osb.setIds(idsList);
 
-        List<Map<String, Object>> itemData = new ArrayList<>();
-        itemData.add(item1);
-        itemData.add(item2);
-
-        osb.set(OSB.SetType.ITEM, itemData);
-
-        Map<String, Object> ids1 = new HashMap<>();
-        ids1.put("key", "a3");
-        ids1.put("value", "12345");
-
-        Map<String, Object> ids2 = new HashMap<>();
-        ids2.put("key", "b4");
-        ids2.put("value", "6789");
-
-        ArrayList<Map<String, Object>> idsList = new ArrayList<>();
-        idsList.add(ids1);
-        idsList.add(ids2);
-
-        osb.setIds(idsList);
+//        HashMap<String, Object> pageData = new HashMap<>();
+//        pageData.put("id", "1234");
+//        pageData.put("title", "The Great Escape");
+//        pageData.put("url", "https://www.binge.nl");
+//        osb.set(OSB.SetType.PAGE, pageData);
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("page_id", "5678");
+//        data.put("campaign_id", "2");
+//        osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data);
 
         try {
             Map<String, Object> eventData = getEventData(hitType);
