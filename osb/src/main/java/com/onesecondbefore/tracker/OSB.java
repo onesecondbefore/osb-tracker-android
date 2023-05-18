@@ -205,6 +205,9 @@ public final class OSB implements LifecycleObserver {
         data.put("ttl", title);
         data.put("ref", referrer);
         send(HitType.PAGEVIEW, null, data);
+
+        // Store data object for next send() ^MB
+        set(SetType.PAGE, data);
     }
 
     public void sendEvent(String category) {

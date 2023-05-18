@@ -90,17 +90,17 @@ final class JsonGenerator {
         JSONObject dataObj = new JSONObject();
 
         try {
-            switch (event.getType()) {
-                case PAGEVIEW:
-                    List<Map<String, Object>> pageData = getSetDataForType(OSB.SetType.PAGE);
-                    if (pageData != null) {
-                        for (Map<String, Object> page : pageData) {
-                            for (Map.Entry<String, Object> entry : page.entrySet()) {
-                                dataObj.put(entry.getKey(), entry.getValue());
-                            }
-                        }
+            // Always add page data ^MB
+            List<Map<String, Object>> pageData = getSetDataForType(OSB.SetType.PAGE);
+            if (pageData != null) {
+                for (Map<String, Object> page : pageData) {
+                    for (Map.Entry<String, Object> entry : page.entrySet()) {
+                        dataObj.put(entry.getKey(), entry.getValue());
                     }
-                    break;
+                }
+            }
+
+            switch (event.getType()) {
                 case EVENT:
                     List<Map<String, Object>> eventData = getSetDataForType(OSB.SetType.EVENT);
                     if (eventData != null) {
