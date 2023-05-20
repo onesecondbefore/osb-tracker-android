@@ -245,6 +245,10 @@ public final class OSB implements LifecycleObserver {
         send(HitType.EVENT, data);
     }
 
+    public void sendAggregateEvent(String scope, String name, AggregateType aggregateType, Double value) {
+        sendAggregate(scope, name, aggregateType, value);
+    }
+
     public void sendAggregate(String scope, String name, AggregateType aggregateType, Double value) {
         Map<String, Object> actionData = new HashMap<>();
         if (!TextUtils.isEmpty(scope)) {
