@@ -35,6 +35,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendEvent(View view) {
+        new Thread( new Runnable() { @Override public void run() {
+            sendEventBackground(view);
+        } } ).start();
+    }
+
+    public void sendEventBackground(View view) {
         String accountId = mEditAccountId.getText().toString();
         if (accountId.isEmpty()) {
             accountId = "development";
@@ -107,15 +113,28 @@ public class MainActivity extends AppCompatActivity {
 
 //        osb.setIds(idsList);
 
-//        HashMap<String, Object> pageData = new HashMap<>();
-//        pageData.put("id", "1234");
-//        pageData.put("title", "The Great Escape");
-//        pageData.put("url", "https://www.binge.nl");
-//        osb.set(OSB.SetType.PAGE, pageData);
-//        Map<String, Object> data = new HashMap<>();
-//        data.put("page_id", "5678");
-//        data.put("campaign_id", "2");
-//        osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data);
+        HashMap<String, Object> pageData = new HashMap<>();
+        pageData.put("id", "1234");
+        pageData.put("title", "The Great Escape");
+        pageData.put("url", "https://www.binge.nl");
+        osb.set(OSB.SetType.PAGE, pageData);
+
+        HashMap<String, Object> pageData2 = new HashMap<>();
+        pageData2.put("id", "4576");
+        pageData2.put("title", "Demo title");
+        pageData2.put("url", "https://www.demo-url.nl");
+
+        List<Map<String, Object>> dataList = new ArrayList<>();
+        dataList.add(pageData);
+        dataList.add(pageData2);
+        osb.set(OSB.SetType.PAGE, dataList);
+
+
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("page_id", "5678");
+        data.put("campaign_id", "2");
+        osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data);
 
         try {
             Map<String, Object> eventData = getEventData(hitType);

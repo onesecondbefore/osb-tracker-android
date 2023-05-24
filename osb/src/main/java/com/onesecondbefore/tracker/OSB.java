@@ -2,11 +2,17 @@ package com.onesecondbefore.tracker;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.StrictMode;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
@@ -22,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-public final class OSB implements LifecycleObserver {
+public final class OSB implements DefaultLifecycleObserver {
     private static final String TAG = "OSB:Api";
     private static OSB mInstance = null;
 
@@ -97,10 +103,49 @@ public final class OSB implements LifecycleObserver {
         config(context, accountId, url, null);
     }
 
+    private void addObservers() {
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+    }
+
+    @Override
+    public void onResume(@NonNull LifecycleOwner owner) {
+        Log.d(TAG, "App in foreground");
+        startGpsTracker();
+
+        if (mQueue != null) {
+            mQueue.resume();
+        }
+    }
+
+    @Override
+    public void onPause(@NonNull LifecycleOwner owner) {
+        Log.d(TAG, "App in background");
+        if (mGpsTracker != null) {
+            mGpsTracker.stopTracker();
+        }
+
+        if (mQueue != null) {
+            mQueue.pause();
+        }
+    }
+
     public void config(Context context, String accountId, String url, String siteId) {
         clear();
 
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+        if (android.os.Build.VERSION.SDK_INT > 9) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+
+        // Get a handler that can be used to post to the main thread
+        Handler mainHandler = new Handler(context.getMainLooper());
+        Runnable addObserversRunnable = new Runnable() {
+            @Override
+            public void run() {
+                addObservers();
+            }
+        };
+        mainHandler.post(addObserversRunnable);
 
         mContext = context.getApplicationContext();
         mConfig.setAccountId(accountId);
@@ -282,27 +327,7 @@ public final class OSB implements LifecycleObserver {
         }
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    private void onAppBackgrounded() {
-        Log.d(TAG, "App in background");
-        if (mGpsTracker != null) {
-            mGpsTracker.stopTracker();
-        }
 
-        if (mQueue != null) {
-            mQueue.pause();
-        }
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    private void onAppForegrounded() {
-        Log.d(TAG, "App in foreground");
-        startGpsTracker();
-
-        if (mQueue != null) {
-            mQueue.resume();
-        }
-    }
 
     /* Deprecated Functions */
 
