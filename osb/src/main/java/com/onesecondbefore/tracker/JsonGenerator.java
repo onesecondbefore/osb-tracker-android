@@ -179,7 +179,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "6.1." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "6.2." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
