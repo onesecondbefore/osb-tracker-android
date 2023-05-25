@@ -315,6 +315,8 @@ final class JsonGenerator {
                 return key.equals("scope") || key.equals("name") || key.equals("value") || key.equals("aggregate");
             case SCREENVIEW:
                 return key.equals("sn") || key.equals("cn");
+            case PAGEVIEW:
+                return key.equals("title") || key.equals("id") || key.equals("url") || key.equals("referrer") || key.equals("osc_id") || key.equals("osc_label") || key.equals("oss_keyword") || key.equals("oss_category") || key.equals("oss_total_results") || key.equals("oss_results_per_page") || key.equals("oss_current_page");
             default:
                 return false;
         }

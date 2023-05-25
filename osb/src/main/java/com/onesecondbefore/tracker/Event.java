@@ -90,23 +90,23 @@ public class Event {
         return key;
     }
 
-    public String[] getDefaultEventKeys() {
-        String[] keys = new String[]{};
-        if (mType == OSB.HitType.EVENT || mType == OSB.HitType.EXCEPTION ||
-                mType == OSB.HitType.SOCIAL || mType == OSB.HitType.TIMING) {
-            keys = new String[]{"category", "action", "label", "value"};
-        } else if (mType == OSB.HitType.SCREENVIEW) {
-            keys = new String[]{"id", "name"};
-        } else if (mType == OSB.HitType.PAGEVIEW) {
-            keys = new String[]{"id", "title", "viewId", "url", "referrer", "osc_id", "osc_label", "oss_keyword", "oss_category", "oss_total_results", "oss_results_per_page", "oss_current_page"};
-        } else if (mType == OSB.HitType.ACTION) {
-            keys = new String[]{"id", "tax", "discount", "currencyCode", "revenue"};
-        } else if (mType == OSB.HitType.IDS) {
-            keys = new String[]{"key", "value", "label"};
-        }
-
-        return keys;
-    }
+//    public String[] getDefaultEventKeys() {
+//        String[] keys = new String[]{};
+//        if (mType == OSB.HitType.EVENT || mType == OSB.HitType.EXCEPTION ||
+//                mType == OSB.HitType.SOCIAL || mType == OSB.HitType.TIMING) {
+//            keys = new String[]{"category", "action", "label", "value"};
+//        } else if (mType == OSB.HitType.SCREENVIEW) {
+//            keys = new String[]{"id", "name"};
+//        } else if (mType == OSB.HitType.PAGEVIEW) {
+//            keys = new String[]{"id", "title", "viewId", "url", "referrer", "osc_id", "osc_label", "oss_keyword", "oss_category", "oss_total_results", "oss_results_per_page", "oss_current_page"};
+//        } else if (mType == OSB.HitType.ACTION) {
+//            keys = new String[]{"id", "tax", "discount", "currencyCode", "revenue"};
+//        } else if (mType == OSB.HitType.IDS) {
+//            keys = new String[]{"key", "value", "label"};
+//        }
+//
+//        return keys;
+//    }
 
     public Map<String, Object> getData() {
         return mData;
