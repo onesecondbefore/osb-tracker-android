@@ -95,7 +95,11 @@ final class JsonGenerator {
             if (pageData != null) {
                 for (Map<String, Object> page : pageData) {
                     for (Map.Entry<String, Object> entry : page.entrySet()) {
-                        dataObj.put(entry.getKey(), entry.getValue());
+                        if (isSpecialKey(entry.getKey(), OSB.HitType.PAGEVIEW)) {
+                            hitObj.put(entry.getKey(), entry.getValue());
+                        } else {
+                            dataObj.put(entry.getKey(), entry.getValue());
+                        }
                     }
                 }
             }
@@ -179,7 +183,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "6.3." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "6.4." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
