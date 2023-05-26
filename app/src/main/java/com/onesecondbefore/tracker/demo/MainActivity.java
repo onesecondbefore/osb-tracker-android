@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
             sendEventBackground(view);
         } } ).start();
     }
-
     public void sendEventBackground(View view) {
         String accountId = mEditAccountId.getText().toString();
         if (accountId.isEmpty()) {
@@ -50,33 +49,40 @@ public class MainActivity extends AppCompatActivity {
         if (serverUrl.isEmpty()) {
             serverUrl = "https://c.onesecondbefore.com";
         }
-
+        String siteId = "test." + (System.currentTimeMillis()/1000);
         Log.i(TAG, "AccountId = " + accountId);
         Log.i(TAG, "ServerUrl = " + serverUrl);
+        Log.i(TAG, "siteId = " + siteId);
 
         OSB osb = OSB.getInstance();
-        osb.config(this, accountId, serverUrl, "osbdemo.app");
+        osb.config(this, accountId, serverUrl, siteId);
 
         osb.setConsent(new String[]{"marketing", "social", "functional", "advertising"});
 
         Log.i(TAG, "consent: " + Arrays.toString(osb.getConsent()));
 
-
-        String type = mEditType.getText().toString();
-        String action = mEditAction.getText().toString();
-        OSB.HitType hitType = getHitType(type);
-
-        Log.i(TAG, "type = " + type);
-        Log.i(TAG, "action = " + action);
-        Log.i(TAG, "hitType = " + hitType);
-
-        // TEST 1: Set page & send viewable_impression
+        // TEST 1: Send pageview
         HashMap<String, Object> pageData = new HashMap<>();
         pageData.put("id", "1234");
         pageData.put("title", "The Great Escape");
         pageData.put("url", "https://www.binge.nl");
-        osb.set(OSB.SetType.PAGE, pageData);
 
+        //With helper:
+        try {
+            //TODO: sendPageView should contain all data objects
+            //osb.sendPageView("Custom page title", "Custom page title", "https://www.thereferrer.com");
+        } catch (IllegalArgumentException ex) {
+            showHitTypeError();
+        }
+
+        //Without helper:
+        try {
+            osb.send(OSB.HitType.PAGEVIEW, pageData);
+        } catch (IllegalArgumentException ex) {
+            showHitTypeError();
+        }
+
+        //UNIT TEST 2: Set page & send viewable_impression
         HashMap<String, Object> data1 = new HashMap<>();
         data1.put("page_id", "5678");
         data1.put("campaign_id", "2");
@@ -86,8 +92,7 @@ public class MainActivity extends AppCompatActivity {
             showHitTypeError();
         }
 
-        // TEST 2: Send event, still with page data from previous set
-//        data.clear(); //Clear hashmap
+        // TEST 3: Send event, still with page data from previous set
         HashMap<String, Object> data2 = new HashMap<>();
         data2.put("category", "unit_test");
         data2.put("action", "unit_action");
@@ -99,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
             showHitTypeError();
         }
 
-        // TEST 3: Send ids with an event
+        // TEST 4: Send ids with an event
         Map<String, Object> ids1 = new HashMap<>();
         ids1.put("key", "a3");
         ids1.put("value", "12345");
@@ -115,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
         osb.setIds(idsList);
 
         HashMap<String, Object> data3 = new HashMap<>();
-//        data.clear(); //Clear hashmap
         data3.put("category", "unit_test");
         data3.put("action", "ids");
         data3.put("label", "send");
@@ -125,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
             showHitTypeError();
         }
 
-        //TEST 4: Action
+        //TEST 5: Action
         Map<String, Object> item1 = new HashMap<>();
         item1.put("id", "sku123");
         item1.put("name", "Apple iPhone 14 Pro");
@@ -145,8 +149,6 @@ public class MainActivity extends AppCompatActivity {
         itemData.add(item2);
 
         osb.set(OSB.SetType.ITEM, itemData);
-
-//        data.clear(); //Clear hashmap
         HashMap<String, Object> data4 = new HashMap<>();
         data4.put("id", "abcd1234");
         data4.put("revenue", 2269.12);
@@ -180,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
             showHitTypeError();
         }
     }
+
 
     /* Private Functions */
     private void initializeFields() {
