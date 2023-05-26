@@ -113,49 +113,64 @@ public class MainActivity extends AppCompatActivity {
 
 //        osb.setIds(idsList);
 
+//        HashMap<String, Object> pageData = new HashMap<>();
+//        pageData.put("id", "1234");
+//        pageData.put("title", "The Great Escape");
+//        pageData.put("url", "https://www.binge.nl");
+//        osb.set(OSB.SetType.PAGE, pageData);
+//
+//        HashMap<String, Object> pageData2 = new HashMap<>();
+//        pageData2.put("id", "4576");
+//        pageData2.put("title", "Demo title");
+//        pageData2.put("url", "https://www.demo-url.nl");
+//
+//        List<Map<String, Object>> dataList = new ArrayList<>();
+//        dataList.add(pageData);
+//        dataList.add(pageData2);
+//        osb.set(OSB.SetType.PAGE, dataList);
+//
+//
+//
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("page_id", "5678");
+//        data.put("campaign_id", "2");
+//        osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data);
+//
+//        try {
+//            Map<String, Object> eventData = getEventData(hitType);
+//
+//            if (hitType == OSB.HitType.ACTION) {
+//                if (action.isEmpty()) {
+//                    showActionError();
+//                } else {
+//                    osb.send(OSB.HitType.ACTION, action, eventData);
+//                }
+//            } else if (hitType == OSB.HitType.PAGEVIEW) {
+//                osb.sendPageView("/homepage", "Homepage", null, eventData);
+//            } else if (hitType == OSB.HitType.SCREENVIEW) {
+//                osb.sendScreenView("Homepage", eventData);
+//            } else if (hitType == OSB.HitType.EVENT) {
+//                osb.sendEvent("event category", "event action", "event label", 1.00);
+//            } else if (hitType == OSB.HitType.AGGREGATE) {
+//                osb.sendAggregate("scope", "scrolldepth", OSB.AggregateType.MAX, 0.8);
+//            } else if (hitType == OSB.HitType.VIEWABLE_IMPRESSION) {
+//                osb.send(OSB.HitType.VIEWABLE_IMPRESSION, eventData);
+//            }
+//        } catch (IllegalArgumentException ex) {
+//            showHitTypeError();
+//        }
+
         HashMap<String, Object> pageData = new HashMap<>();
         pageData.put("id", "1234");
         pageData.put("title", "The Great Escape");
         pageData.put("url", "https://www.binge.nl");
         osb.set(OSB.SetType.PAGE, pageData);
 
-        HashMap<String, Object> pageData2 = new HashMap<>();
-        pageData2.put("id", "4576");
-        pageData2.put("title", "Demo title");
-        pageData2.put("url", "https://www.demo-url.nl");
-
-        List<Map<String, Object>> dataList = new ArrayList<>();
-        dataList.add(pageData);
-        dataList.add(pageData2);
-        osb.set(OSB.SetType.PAGE, dataList);
-
-
-
         Map<String, Object> data = new HashMap<>();
         data.put("page_id", "5678");
         data.put("campaign_id", "2");
-        osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data);
-
         try {
-            Map<String, Object> eventData = getEventData(hitType);
-
-            if (hitType == OSB.HitType.ACTION) {
-                if (action.isEmpty()) {
-                    showActionError();
-                } else {
-                    osb.send(OSB.HitType.ACTION, action, eventData);
-                }
-            } else if (hitType == OSB.HitType.PAGEVIEW) {
-                osb.sendPageView("/homepage", "Homepage", null, eventData);
-            } else if (hitType == OSB.HitType.SCREENVIEW) {
-                osb.sendScreenView("Homepage", eventData);
-            } else if (hitType == OSB.HitType.EVENT) {
-                osb.sendEvent("event category", "event action", "event label", 1.00);
-            } else if (hitType == OSB.HitType.AGGREGATE) {
-                osb.sendAggregate("scope", "scrolldepth", OSB.AggregateType.MAX, 0.8);
-            } else if (hitType == OSB.HitType.VIEWABLE_IMPRESSION) {
-                osb.send(OSB.HitType.VIEWABLE_IMPRESSION, eventData);
-            }
+            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data);
         } catch (IllegalArgumentException ex) {
             showHitTypeError();
         }

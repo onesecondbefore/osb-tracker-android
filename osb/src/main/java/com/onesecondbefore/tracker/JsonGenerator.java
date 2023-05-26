@@ -95,11 +95,9 @@ final class JsonGenerator {
             if (pageData != null) {
                 for (Map<String, Object> page : pageData) {
                     for (Map.Entry<String, Object> entry : page.entrySet()) {
-                        if (isSpecialKey(entry.getKey(), OSB.HitType.PAGEVIEW)) {
-                            hitObj.put(entry.getKey(), entry.getValue());
-                        } else {
+                        if (!isSpecialKey(entry.getKey(), OSB.HitType.PAGEVIEW)) {
                             dataObj.put(entry.getKey(), entry.getValue());
-                        }
+                        } // If it's a special key we will have added it to the page (pg) object ^MB
                     }
                 }
             }
@@ -183,7 +181,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "6.4." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "6.5." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
@@ -227,6 +225,17 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("vid", viewId);
+            // Make sure to only add 'special' page keys from the set(page) data, other data will be added to hits->data object. ^MB
+            List<Map<String, Object>> pageData = getSetDataForType(OSB.SetType.PAGE);
+            if (pageData != null) {
+                for (Map<String, Object> page : pageData) {
+                    for (Map.Entry<String, Object> entry : page.entrySet()) {
+                        if (isSpecialKey(entry.getKey(), OSB.HitType.PAGEVIEW)) {
+                            json.put(entry.getKey(), entry.getValue());
+                        }
+                    }
+                }
+            }
         } catch (JSONException e) {
             Log.e(TAG, "getPageInfo - " + e.getMessage());
         }
