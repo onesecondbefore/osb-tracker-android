@@ -69,8 +69,7 @@ public class MainActivity extends AppCompatActivity {
 
         //With helper:
         try {
-            //TODO: sendPageView should contain all data objects
-            //osb.sendPageView("Custom page title", "Custom page title", "https://www.thereferrer.com");
+            osb.sendPageView("Custom page title", "Custom page title", "https://www.thereferrer.com", "3456");
         } catch (IllegalArgumentException ex) {
             showHitTypeError();
         }
@@ -82,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
             showHitTypeError();
         }
 
-        //UNIT TEST 2: Set page & send viewable_impression
+        // TEST 2: Set page & send viewable_impression
         HashMap<String, Object> data1 = new HashMap<>();
         data1.put("page_id", "5678");
         data1.put("campaign_id", "2");
