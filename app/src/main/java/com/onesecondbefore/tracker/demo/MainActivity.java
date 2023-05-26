@@ -61,15 +61,6 @@ public class MainActivity extends AppCompatActivity {
 
         Log.i(TAG, "consent: " + Arrays.toString(osb.getConsent()));
 
-//        HashMap<String, Object> extraData = new HashMap<>();
-//        extraData.put("extra1", "value1");
-//        extraData.put("extra2", "value2");
-//        osb.set("extra", extraData);
-//
-//        HashMap<String, Object> hitsData = new HashMap<>();
-//        hitsData.put("hit1", "value1");
-//        hitsData.put("hit2", "value2");
-//        osb.set(hitsData);
 
         String type = mEditType.getText().toString();
         String action = mEditAction.getText().toString();
@@ -79,98 +70,112 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "action = " + action);
         Log.i(TAG, "hitType = " + hitType);
 
-//        Map<String, Object> item1 = new HashMap<>();
-//        item1.put("id", "sku123");
-//        item1.put("name", "Apple iPhone 14 Pro");
-//        item1.put("category", "mobile");
-//        item1.put("price", 1234.56);
-//        item1.put("quantity", 1);
-//
-//        Map<String, Object> item2 = new HashMap<>();
-//        item2.put("id", "sku234");
-//        item2.put("name", "Samsung Galaxy S22");
-//        item2.put("category", "mobile");
-//        item2.put("price", 1034.56);
-//        item2.put("quantity", 1);
-//
-//        List<Map<String, Object>> itemData = new ArrayList<>();
-//        itemData.add(item1);
-//        itemData.add(item2);
-//
-//        osb.set(OSB.SetType.ITEM, itemData);
-//
-//        Map<String, Object> ids1 = new HashMap<>();
-//        ids1.put("key", "a3");
-//        ids1.put("value", "12345");
-//
-//        Map<String, Object> ids2 = new HashMap<>();
-//        ids2.put("key", "b4");
-//        ids2.put("value", "6789");
-//
-//        ArrayList<Map<String, Object>> idsList = new ArrayList<>();
-//        idsList.add(ids1);
-//        idsList.add(ids2);
-
-//        osb.setIds(idsList);
-
-//        HashMap<String, Object> pageData = new HashMap<>();
-//        pageData.put("id", "1234");
-//        pageData.put("title", "The Great Escape");
-//        pageData.put("url", "https://www.binge.nl");
-//        osb.set(OSB.SetType.PAGE, pageData);
-//
-//        HashMap<String, Object> pageData2 = new HashMap<>();
-//        pageData2.put("id", "4576");
-//        pageData2.put("title", "Demo title");
-//        pageData2.put("url", "https://www.demo-url.nl");
-//
-//        List<Map<String, Object>> dataList = new ArrayList<>();
-//        dataList.add(pageData);
-//        dataList.add(pageData2);
-//        osb.set(OSB.SetType.PAGE, dataList);
-//
-//
-//
-//        Map<String, Object> data = new HashMap<>();
-//        data.put("page_id", "5678");
-//        data.put("campaign_id", "2");
-//        osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data);
-//
-//        try {
-//            Map<String, Object> eventData = getEventData(hitType);
-//
-//            if (hitType == OSB.HitType.ACTION) {
-//                if (action.isEmpty()) {
-//                    showActionError();
-//                } else {
-//                    osb.send(OSB.HitType.ACTION, action, eventData);
-//                }
-//            } else if (hitType == OSB.HitType.PAGEVIEW) {
-//                osb.sendPageView("/homepage", "Homepage", null, eventData);
-//            } else if (hitType == OSB.HitType.SCREENVIEW) {
-//                osb.sendScreenView("Homepage", eventData);
-//            } else if (hitType == OSB.HitType.EVENT) {
-//                osb.sendEvent("event category", "event action", "event label", 1.00);
-//            } else if (hitType == OSB.HitType.AGGREGATE) {
-//                osb.sendAggregate("scope", "scrolldepth", OSB.AggregateType.MAX, 0.8);
-//            } else if (hitType == OSB.HitType.VIEWABLE_IMPRESSION) {
-//                osb.send(OSB.HitType.VIEWABLE_IMPRESSION, eventData);
-//            }
-//        } catch (IllegalArgumentException ex) {
-//            showHitTypeError();
-//        }
-
+        // TEST 1: Set page & send viewable_impression
         HashMap<String, Object> pageData = new HashMap<>();
         pageData.put("id", "1234");
         pageData.put("title", "The Great Escape");
         pageData.put("url", "https://www.binge.nl");
         osb.set(OSB.SetType.PAGE, pageData);
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("page_id", "5678");
-        data.put("campaign_id", "2");
+        HashMap<String, Object> data1 = new HashMap<>();
+        data1.put("page_id", "5678");
+        data1.put("campaign_id", "2");
         try {
-            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data);
+            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
+        } catch (IllegalArgumentException ex) {
+            showHitTypeError();
+        }
+
+        // TEST 2: Send event, still with page data from previous set
+//        data.clear(); //Clear hashmap
+        HashMap<String, Object> data2 = new HashMap<>();
+        data2.put("category", "unit_test");
+        data2.put("action", "unit_action");
+        data2.put("label", "unit_label");
+        data2.put("value", 8.9);
+        try {
+            osb.send(OSB.HitType.EVENT, data2);
+        } catch (IllegalArgumentException ex) {
+            showHitTypeError();
+        }
+
+        // TEST 3: Send ids with an event
+        Map<String, Object> ids1 = new HashMap<>();
+        ids1.put("key", "a3");
+        ids1.put("value", "12345");
+
+        Map<String, Object> ids2 = new HashMap<>();
+        ids2.put("key", "b4");
+        ids2.put("value", "6789");
+
+        ArrayList<Map<String, Object>> idsList = new ArrayList<>();
+        idsList.add(ids1);
+        idsList.add(ids2);
+
+        osb.setIds(idsList);
+
+        HashMap<String, Object> data3 = new HashMap<>();
+//        data.clear(); //Clear hashmap
+        data3.put("category", "unit_test");
+        data3.put("action", "ids");
+        data3.put("label", "send");
+        try {
+            osb.send(OSB.HitType.EVENT, data3);
+        } catch (IllegalArgumentException ex) {
+            showHitTypeError();
+        }
+
+        //TEST 4: Action
+        Map<String, Object> item1 = new HashMap<>();
+        item1.put("id", "sku123");
+        item1.put("name", "Apple iPhone 14 Pro");
+        item1.put("category", "mobile");
+        item1.put("price", 1234.56);
+        item1.put("quantity", 1);
+
+        Map<String, Object> item2 = new HashMap<>();
+        item2.put("id", "sku234");
+        item2.put("name", "Samsung Galaxy S22");
+        item2.put("category", "mobile");
+        item2.put("price", 1034.56);
+        item2.put("quantity", 1);
+
+        List<Map<String, Object>> itemData = new ArrayList<>();
+        itemData.add(item1);
+        itemData.add(item2);
+
+        osb.set(OSB.SetType.ITEM, itemData);
+
+//        data.clear(); //Clear hashmap
+        HashMap<String, Object> data4 = new HashMap<>();
+        data4.put("id", "abcd1234");
+        data4.put("revenue", 2269.12);
+        data4.put("tax", (2269.12 * 0.21));
+        data4.put("shipping", 100);
+        data4.put("affiliation", "partner_funnel"); // Custom data item
+
+        try {
+            osb.send(OSB.HitType.ACTION, "purchase", data4);
+        } catch (IllegalArgumentException ex) {
+            showHitTypeError();
+        }
+
+        // TEST 6: Aggregate
+        Map<String, Object> data6 = new HashMap<>();
+        data6.put("scope", "pageview");
+        data6.put("name", "scrolldepth");
+        data6.put("aggregate", OSB.AggregateType.MAX);
+        data6.put("value", 0.8);
+
+        // Without helper
+        try {
+            osb.send(OSB.HitType.AGGREGATE, data6);
+        } catch (IllegalArgumentException ex) {
+            showHitTypeError();
+        }
+        // With helper
+        try {
+            osb.sendAggregate("pageview", "scrolldepth", OSB.AggregateType.MAX, 0.8);
         } catch (IllegalArgumentException ex) {
             showHitTypeError();
         }
@@ -188,13 +193,21 @@ public class MainActivity extends AppCompatActivity {
     private void showActionError() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Enter a valid action");
-        builder.show();
+        this.runOnUiThread(new Runnable() {
+            public void run() {
+                builder.show();
+            }
+        });
     }
 
     private void showHitTypeError() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Invalid hit type");
-        builder.show();
+        this.runOnUiThread(new Runnable() {
+            public void run() {
+                builder.show();
+            }
+        });
     }
 
     private OSB.HitType getHitType(String type) {

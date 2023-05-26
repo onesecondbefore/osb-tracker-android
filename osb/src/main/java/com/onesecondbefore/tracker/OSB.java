@@ -320,9 +320,9 @@ public final class OSB implements DefaultLifecycleObserver {
 
     public void send(HitType type, String actionType,
                      Map<String, Object> data) {
-        if (type == HitType.AGGREGATE) {
-            throw new IllegalArgumentException("Please use sendAggregate() instead of send(HitType.Aggregate, ...)");
-        }
+//        if (type == HitType.AGGREGATE) {
+//            throw new IllegalArgumentException("Please use sendAggregate() instead of send(HitType.Aggregate, ...)");
+//        }
 
         if (mIsInitialized) {
             mInstance.sendEventToQueue(type, actionType, data);
