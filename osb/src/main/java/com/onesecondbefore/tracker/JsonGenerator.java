@@ -185,7 +185,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "6.7." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "6.8." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
@@ -333,7 +333,7 @@ final class JsonGenerator {
             case SCREENVIEW:
                 return key.equals("sn") || key.equals("cn");
             case PAGEVIEW:
-                return key.equals("title") || key.equals("id") || key.equals("url") || key.equals("referrer") || key.equals("osc_id") || key.equals("osc_label") || key.equals("oss_keyword") || key.equals("oss_category") || key.equals("oss_total_results") || key.equals("oss_results_per_page") || key.equals("oss_current_page");
+                return key.equals("title") || key.equals("id") || key.equals("url") || key.equals("ref") || key.equals("osc_id") || key.equals("osc_label") || key.equals("oss_keyword") || key.equals("oss_category") || key.equals("oss_total_results") || key.equals("oss_results_per_page") || key.equals("oss_current_page");
             case ACTION:
                 return key.equals("tax") || key.equals("id") || key.equals("discount") || key.equals("currencyCode") || key.equals("revenue") || key.equals("currency_code");
             default:

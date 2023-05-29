@@ -252,7 +252,7 @@ public final class OSB implements DefaultLifecycleObserver {
         }
         data.put("url", url);
         data.put("title", title);
-        data.put("referrer", referrer);
+        data.put("ref", referrer);
         data.put("id", id);
         data.put("osc_id", osc_id);
         data.put("osc_label", osc_label);
@@ -272,7 +272,7 @@ public final class OSB implements DefaultLifecycleObserver {
             data = new HashMap<>();
         }
         data.put("url", url);
-        data.put("ttl", title);
+        data.put("title", title);
         data.put("ref", referrer);
         send(HitType.PAGEVIEW, null, data);
 
