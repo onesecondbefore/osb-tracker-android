@@ -95,7 +95,9 @@ final class JsonGenerator {
             if (pageData != null) {
                 for (Map<String, Object> page : pageData) {
                     for (Map.Entry<String, Object> entry : page.entrySet()) {
-                        dataObj.put(entry.getKey(), entry.getValue());
+                        if (!isSpecialKey(entry.getKey(), OSB.HitType.PAGEVIEW)) {
+                            dataObj.put(entry.getKey(), entry.getValue());
+                        } // If it's a special key we will have added it to the page (pg) object ^MB
                     }
                 }
             }
@@ -120,7 +122,11 @@ final class JsonGenerator {
                     if (actionData != null) {
                         for (Map<String, Object> actionObj : actionData) {
                             for (Map.Entry<String, Object> entry : actionObj.entrySet()) {
-                                dataObj.put(entry.getKey(), entry.getValue());
+                                if (isSpecialKey(entry.getKey(), OSB.HitType.ACTION)) {
+                                    hitObj.put(entry.getKey(), entry.getValue());
+                                } else {
+                                    dataObj.put(entry.getKey(), entry.getValue());
+                                }
                             }
                         }
                     }
@@ -179,7 +185,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "6.2." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "6.8." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
@@ -223,6 +229,17 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("vid", viewId);
+            // Make sure to only add 'special' page keys from the set(page) data, other data will be added to hits->data object. ^MB
+            List<Map<String, Object>> pageData = getSetDataForType(OSB.SetType.PAGE);
+            if (pageData != null) {
+                for (Map<String, Object> page : pageData) {
+                    for (Map.Entry<String, Object> entry : page.entrySet()) {
+                        if (isSpecialKey(entry.getKey(), OSB.HitType.PAGEVIEW)) {
+                            json.put(entry.getKey(), entry.getValue());
+                        }
+                    }
+                }
+            }
         } catch (JSONException e) {
             Log.e(TAG, "getPageInfo - " + e.getMessage());
         }
@@ -310,13 +327,15 @@ final class JsonGenerator {
     private Boolean isSpecialKey(String key, OSB.HitType hitType) {
         switch (hitType) {
             case EVENT:
-                return key.equals("category") || key.equals("value") || key.equals("label") || key.equals("action");
+                return key.equals("category") || key.equals("value") || key.equals("label") || key.equals("action") || key.equals("interaction");
             case AGGREGATE:
                 return key.equals("scope") || key.equals("name") || key.equals("value") || key.equals("aggregate");
             case SCREENVIEW:
                 return key.equals("sn") || key.equals("cn");
             case PAGEVIEW:
-                return key.equals("title") || key.equals("id") || key.equals("url") || key.equals("referrer") || key.equals("osc_id") || key.equals("osc_label") || key.equals("oss_keyword") || key.equals("oss_category") || key.equals("oss_total_results") || key.equals("oss_results_per_page") || key.equals("oss_current_page");
+                return key.equals("title") || key.equals("id") || key.equals("url") || key.equals("ref") || key.equals("osc_id") || key.equals("osc_label") || key.equals("oss_keyword") || key.equals("oss_category") || key.equals("oss_total_results") || key.equals("oss_results_per_page") || key.equals("oss_current_page");
+            case ACTION:
+                return key.equals("tax") || key.equals("id") || key.equals("discount") || key.equals("currencyCode") || key.equals("revenue") || key.equals("currency_code");
             default:
                 return false;
         }

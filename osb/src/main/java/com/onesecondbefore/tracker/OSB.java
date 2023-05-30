@@ -235,19 +235,44 @@ public final class OSB implements DefaultLifecycleObserver {
     }
 
     public void sendPageView(String url, String title) {
-        sendPageView(url, title, null, null);
+        sendPageView(url, title, null);
     }
 
     public void sendPageView(String url, String title, String referrer) {
-        sendPageView(url, title, referrer, null);
+        sendPageView(url, title, referrer, null, null, null, null, null, null, null, null, null);
     }
 
+    public void sendPageView(String url, String title, String referrer, String id) {
+        sendPageView(url, title, referrer, null, id, null, null, null, null, null, null, null);
+    }
+
+    public void sendPageView(String url, String title, String referrer, Map<String, Object> data, String id, String osc_id, String osc_label, String oss_keyword, String oss_category, String oss_total_results, String oss_results_per_page, String oss_current_page) {
+        if (data == null) {
+            data = new HashMap<>();
+        }
+        data.put("url", url);
+        data.put("title", title);
+        data.put("ref", referrer);
+        data.put("id", id);
+        data.put("osc_id", osc_id);
+        data.put("osc_label", osc_label);
+        data.put("oss_keyword", oss_keyword);
+        data.put("oss_category", oss_category);
+        data.put("oss_total_results", oss_total_results);
+        data.put("oss_results_per_page", oss_results_per_page);
+        data.put("oss_current_page", oss_current_page);
+
+        send(HitType.PAGEVIEW, null, data);
+
+        // Store data object for next send() ^MB
+        set(SetType.PAGE, data);
+    }
     public void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
         if (data == null) {
             data = new HashMap<>();
         }
         data.put("url", url);
-        data.put("ttl", title);
+        data.put("title", title);
         data.put("ref", referrer);
         send(HitType.PAGEVIEW, null, data);
 
@@ -272,6 +297,9 @@ public final class OSB implements DefaultLifecycleObserver {
     }
 
     public void sendEvent(String category, String action, String label, Double value, Map<String, Object> data) {
+        sendEvent(category, action, label, value, data, null);
+    }
+    public void sendEvent(String category, String action, String label, Double value, Map<String, Object> data, Boolean interaction) {
         if (data == null) {
             data = new HashMap<>();
         }
@@ -287,6 +315,10 @@ public final class OSB implements DefaultLifecycleObserver {
         if (value != null) {
             data.put("value", String.format(Locale.ENGLISH, "%.2f", value));
         }
+        if (interaction != null) {
+            data.put("interaction", interaction.toString());
+        }
+
         send(HitType.EVENT, data);
     }
 
@@ -320,9 +352,9 @@ public final class OSB implements DefaultLifecycleObserver {
 
     public void send(HitType type, String actionType,
                      Map<String, Object> data) {
-        if (type == HitType.AGGREGATE) {
-            throw new IllegalArgumentException("Please use sendAggregate() instead of send(HitType.Aggregate, ...)");
-        }
+//        if (type == HitType.AGGREGATE) {
+//            throw new IllegalArgumentException("Please use sendAggregate() instead of send(HitType.Aggregate, ...)");
+//        }
 
         if (mIsInitialized) {
             mInstance.sendEventToQueue(type, actionType, data);
