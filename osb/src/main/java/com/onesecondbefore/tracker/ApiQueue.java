@@ -84,7 +84,6 @@ class ApiQueue {
         if (url != null && data != null) {
             ApiTask task = new ApiTask(url, data);
             mQueue.push(task);
-
             processQueue();
         }
     }
