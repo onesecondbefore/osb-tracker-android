@@ -113,7 +113,9 @@ public final class OSB implements DefaultLifecycleObserver {
         startGpsTracker();
 
         if (mQueue != null) {
-            mQueue.resume();
+            new Thread( new Runnable() { @Override public void run() {
+                mQueue.resume();
+            } } ).start();
         }
     }
 
