@@ -360,13 +360,45 @@ public final class OSB implements DefaultLifecycleObserver {
 
         if (mIsInitialized) {
             mInstance.sendEventToQueue(type, actionType, data);
+            removeHitScope();
         } else {
             throw new IllegalArgumentException("Initialize OSB Tracker first with: OSB osb = OSB.getInstance(); osb.config(...);");
         }
     }
 
+    public void remove() {
+        remove("action");
+        remove("event");
+        remove("item");
+        remove("page");
+        remove("hits");
+        remove("ids");
+    }
 
-
+    public void remove(String type) {
+        switch (type) {
+            case "action":
+                set(SetType.ACTION, (Map<String, Object>) null);
+                break;
+            case "event":
+                mEventData = null;
+                break;
+            case "item":
+                set(SetType.ITEM, (Map<String, Object>) null);
+                break;
+            case "page":
+                set(SetType.PAGE, (Map<String, Object>) null);
+                break;
+            case "hits":
+                mHitsData = null;
+                break;
+            case "ids":
+                mIds = null;
+                break;
+            default:
+                break;
+        }
+    }
     /* Deprecated Functions */
 
     /**
@@ -393,7 +425,40 @@ public final class OSB implements DefaultLifecycleObserver {
         config(context, accountId, url, siteId);
     }
 
+    /**
+     * @deprecated This method is renamed to 'config'
+     * <p> Use {@link OSB#remove()} instead. </p>
+     */
+    public void reset() {
+        remove();
+    }
+
     /* Private Functions */
+    private void removeHitScope() {
+        mEventData = null;
+        mHitsData = null;
+        mIds = null;
+        set(SetType.ITEM, (Map<String, Object>) null);
+        set(SetType.ACTION, (Map<String, Object>) null);
+
+        List<Map<String, Object>> pageData = (List<Map<String, Object>>) mSetDataObject.get("page");
+        var page = pageData.get(0);
+        if (page != null) {
+            page.put("oss_category", null);
+            page.put("oss_keyword", null);
+            page.put("oss_total_results", null);
+            page.put("oss_results_per_page", null);
+            page.put("oss_current_page", null);
+            page.put("osc_id", null);
+
+            // Should these two be implemented as well? ^MB
+            page.put("onsite_search", null);
+            page.put("onsite_campaign", null);
+
+            set(SetType.PAGE, page);
+        }
+    }
+
     private void startGpsTracker() {
         if (mContext == null) {
             return;
