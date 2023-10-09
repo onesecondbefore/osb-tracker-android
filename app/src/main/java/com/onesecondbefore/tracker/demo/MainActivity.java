@@ -82,31 +82,34 @@ public class MainActivity extends AppCompatActivity {
 //        }
 //
 //        // TEST 2: Set page & send viewable_impression
-//        HashMap<String, Object> data1 = new HashMap<>();
-//        data1.put("page_id", "5678");
-//        data1.put("campaign_id", "2");
-//        try {
-//            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
-//        } catch (IllegalArgumentException ex) {
-//            showHitTypeError();
-//        }
+        HashMap<String, Object> data1 = new HashMap<>();
+        data1.put("page_id", "11111");
+        data1.put("campaign_id", "1");
+        osb.set(OSB.SetType.PAGE, data1);
+        data1.put("page_id", "2222");
+        data1.put("campaign_id", "2");
+        try {
+            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
+        } catch (IllegalArgumentException ex) {
+            showHitTypeError();
+        }
 //
 //        // TEST 3: Send event, still with page data from previous set
-//        HashMap<String, Object> data2 = new HashMap<>();
-//        data2.put("category", "unit_test");
-//        data2.put("action", "unit_action");
-//        data2.put("label", "unit_label");
-//        data2.put("value", 8.9);
-//        try {
-//            osb.send(OSB.HitType.EVENT, data2);
-//        } catch (IllegalArgumentException ex) {
-//            showHitTypeError();
-//        }
+        HashMap<String, Object> data2 = new HashMap<>();
+        data2.put("category", "unit_test");
+        data2.put("action", "unit_action");
+        data2.put("label", "unit_label");
+        data2.put("value", 8.9);
+        try {
+            osb.send(OSB.HitType.EVENT, data2);
+        } catch (IllegalArgumentException ex) {
+            showHitTypeError();
+        }
 //
 //        // TEST 4: Send ids with an event
-//        Map<String, Object> ids1 = new HashMap<>();
-//        ids1.put("key", "a3");
-//        ids1.put("value", "12345");
+        Map<String, Object> ids1 = new HashMap<>();
+        ids1.put("key", "a3");
+        ids1.put("value", "12345");
 //
 //        Map<String, Object> ids2 = new HashMap<>();
 //        ids2.put("key", "b4");
@@ -182,21 +185,21 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("id", "12345");
-        data.put("title", "the matrix");
-        data.put("url", "binge.com");
-
-        osb.set(OSB.SetType.PAGE, data);
-
-        HashMap<String, Object> data1 = new HashMap<>();
-        data1.put("page_id", "5678");
-        data1.put("campaign_id", "2");
-        try {
-            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
-        } catch (IllegalArgumentException ex) {
-            showHitTypeError();
-        }
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("id", "12345");
+//        data.put("title", "the matrix");
+//        data.put("url", "binge.com");
+//
+//        osb.set(OSB.SetType.PAGE, data);
+//
+//        HashMap<String, Object> data1 = new HashMap<>();
+//        data1.put("page_id", "5678");
+//        data1.put("campaign_id", "2");
+//        try {
+//            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
+//        } catch (IllegalArgumentException ex) {
+//            showHitTypeError();
+//        }
 
 //        osb.set(OSB.SetType.PAGE, new HashMap<>());
 

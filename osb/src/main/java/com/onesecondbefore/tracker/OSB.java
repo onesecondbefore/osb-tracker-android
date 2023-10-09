@@ -441,22 +441,25 @@ public final class OSB implements DefaultLifecycleObserver {
         set(SetType.ITEM, (Map<String, Object>) null);
         set(SetType.ACTION, (Map<String, Object>) null);
 
-        List<Map<String, Object>> pageData = (List<Map<String, Object>>) mSetDataObject.get("page");
-        var page = pageData.get(0);
-        if (page != null) {
-            page.put("oss_category", null);
-            page.put("oss_keyword", null);
-            page.put("oss_total_results", null);
-            page.put("oss_results_per_page", null);
-            page.put("oss_current_page", null);
-            page.put("osc_id", null);
+        List<Map<String, Object>> pageData = (List<Map<String, Object>>) mSetDataObject.get("PAGE");
+        if (pageData != null) {
+            var page = pageData.get(0);
+            if (page != null) {
+                page.put("oss_category", null);
+                page.put("oss_keyword", null);
+                page.put("oss_total_results", null);
+                page.put("oss_results_per_page", null);
+                page.put("oss_current_page", null);
+                page.put("osc_id", null);
 
-            // Should these two be implemented as well? ^MB
-            page.put("onsite_search", null);
-            page.put("onsite_campaign", null);
+                // Should these two be implemented as well? ^MB
+                page.put("onsite_search", null);
+                page.put("onsite_campaign", null);
 
-            set(SetType.PAGE, page);
+                set(SetType.PAGE, page);
+            }
         }
+
     }
 
     private void startGpsTracker() {
