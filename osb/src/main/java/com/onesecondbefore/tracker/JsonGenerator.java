@@ -121,11 +121,13 @@ final class JsonGenerator {
                     List<Map<String, Object>> actionData = getSetDataForType(OSB.SetType.ACTION);
                     if (actionData != null) {
                         for (Map<String, Object> actionObj : actionData) {
-                            for (Map.Entry<String, Object> entry : actionObj.entrySet()) {
-                                if (isSpecialKey(entry.getKey(), OSB.HitType.ACTION)) {
-                                    hitObj.put(entry.getKey(), entry.getValue());
-                                } else {
-                                    dataObj.put(entry.getKey(), entry.getValue());
+                            if (actionObj != null) {
+                                for (Map.Entry<String, Object> entry : actionObj.entrySet()) {
+                                    if (isSpecialKey(entry.getKey(), OSB.HitType.ACTION)) {
+                                        hitObj.put(entry.getKey(), entry.getValue());
+                                    } else {
+                                        dataObj.put(entry.getKey(), entry.getValue());
+                                    }
                                 }
                             }
                         }

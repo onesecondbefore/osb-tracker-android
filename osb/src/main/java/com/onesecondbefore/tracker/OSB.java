@@ -379,16 +379,16 @@ public final class OSB implements DefaultLifecycleObserver {
     public void remove(String type) {
         switch (type) {
             case "action":
-                set(SetType.ACTION, (Map<String, Object>) null);
+                set(SetType.ACTION, (List<Map<String, Object>>) null);
                 break;
             case "event":
                 mEventData = null;
                 break;
             case "item":
-                set(SetType.ITEM, (Map<String, Object>) null);
+                set(SetType.ITEM, (List<Map<String, Object>>) null);
                 break;
             case "page":
-                set(SetType.PAGE, (Map<String, Object>) null);
+                set(SetType.PAGE, (List<Map<String, Object>>) null);
                 break;
             case "hits":
                 mHitsData = null;

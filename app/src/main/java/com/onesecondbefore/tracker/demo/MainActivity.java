@@ -2,6 +2,8 @@ package com.onesecondbefore.tracker.demo;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -35,9 +37,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendEvent(View view) {
-        new Thread( new Runnable() { @Override public void run() {
+//        new Thread( new Runnable() { @Override public void run() {
             sendEventBackground(view);
-        } } ).start();
+//        } } ).start();
     }
     public void sendEventBackground(View view) {
         String accountId = mEditAccountId.getText().toString();
@@ -57,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         OSB osb = OSB.getInstance();
         osb.config(this, accountId, serverUrl, siteId);
 
-        osb.setConsent(new String[]{"marketing", "social", "functional", "advertising"});
+//        osb.setConsent(new String[]{"marketing", "social", "functional", "advertising"});
 
         Log.i(TAG, "consent: " + Arrays.toString(osb.getConsent()));
 //
@@ -82,34 +84,34 @@ public class MainActivity extends AppCompatActivity {
 //        }
 //
 //        // TEST 2: Set page & send viewable_impression
-        HashMap<String, Object> data1 = new HashMap<>();
-        data1.put("page_id", "11111");
-        data1.put("campaign_id", "1");
-        osb.set(OSB.SetType.PAGE, data1);
-        data1.put("page_id", "2222");
-        data1.put("campaign_id", "2");
-        try {
-            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
-        } catch (IllegalArgumentException ex) {
-            showHitTypeError();
-        }
+//        HashMap<String, Object> data1 = new HashMap<>();
+//        data1.put("page_id", "11111");
+//        data1.put("campaign_id", "1");
+//        osb.set(OSB.SetType.PAGE, data1);
+//        data1.put("page_id", "2222");
+//        data1.put("campaign_id", "2");
+//        try {
+//            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
+//        } catch (IllegalArgumentException ex) {
+//            showHitTypeError();
+//        }
 //
 //        // TEST 3: Send event, still with page data from previous set
-        HashMap<String, Object> data2 = new HashMap<>();
-        data2.put("category", "unit_test");
-        data2.put("action", "unit_action");
-        data2.put("label", "unit_label");
-        data2.put("value", 8.9);
-        try {
-            osb.send(OSB.HitType.EVENT, data2);
-        } catch (IllegalArgumentException ex) {
-            showHitTypeError();
-        }
+//        HashMap<String, Object> data2 = new HashMap<>();
+//        data2.put("category", "unit_test");
+//        data2.put("action", "unit_action");
+//        data2.put("label", "unit_label");
+//        data2.put("value", 8.9);
+//        try {
+//            osb.send(OSB.HitType.EVENT, data2);
+//        } catch (IllegalArgumentException ex) {
+//            showHitTypeError();
+//        }
 //
 //        // TEST 4: Send ids with an event
-        Map<String, Object> ids1 = new HashMap<>();
-        ids1.put("key", "a3");
-        ids1.put("value", "12345");
+//        Map<String, Object> ids1 = new HashMap<>();
+//        ids1.put("key", "a3");
+//        ids1.put("value", "12345");
 //
 //        Map<String, Object> ids2 = new HashMap<>();
 //        ids2.put("key", "b4");
@@ -151,12 +153,12 @@ public class MainActivity extends AppCompatActivity {
 //        itemData.add(item2);
 //
 //        osb.set(OSB.SetType.ITEM, itemData);
-//        HashMap<String, Object> data4 = new HashMap<>();
-//        data4.put("id", "abcd1234");
-//        data4.put("revenue", 2269.12);
-//        data4.put("tax", (2269.12 * 0.21));
-//        data4.put("shipping", 100);
-//        data4.put("affiliation", "partner_funnel"); // Custom data item
+        HashMap<String, Object> data4 = new HashMap<>();
+        data4.put("id", "abcd1234");
+        data4.put("revenue", 2269.12);
+        data4.put("tax", (2269.12 * 0.21));
+        data4.put("shipping", 100);
+        data4.put("affiliation", "partner_funnel"); // Custom data item
 //
 //        try {
 //            osb.send(OSB.HitType.ACTION, "purchase", data4);
@@ -202,14 +204,27 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
 //        osb.set(OSB.SetType.PAGE, new HashMap<>());
+        
+        osb.sendScreenView("screenName", "screenClass");
 
-        try {
-            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
-        } catch (IllegalArgumentException ex) {
-            showHitTypeError();
-        }
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                osb.sendPageView("pageview url", "pagviewTitle", "pageview referrer","screenview id");
+            }
+        }, 2000);
 
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                osb.send(OSB.HitType.ACTION, "purchase", data4);
+            }
+        }, 3000);
 
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                osb.sendScreenView("screenName2", "screenClass2");
+            }
+        }, 4000);
     }
 
 
