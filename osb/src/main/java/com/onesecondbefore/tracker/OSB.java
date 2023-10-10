@@ -233,6 +233,7 @@ public final class OSB implements DefaultLifecycleObserver {
         }
         data.put("sn", screenName);
         data.put("cn", className);
+        remove("page");
         send(HitType.SCREENVIEW, null, data);
     }
 
@@ -499,7 +500,7 @@ public final class OSB implements DefaultLifecycleObserver {
     }
 
     private String getViewId(Event event) {
-        if (event.getType() == HitType.PAGEVIEW) {
+        if (event.getType() == HitType.PAGEVIEW || event.getType() == HitType.SCREENVIEW) {
             mViewId = calculateViewId();
         }
         return mViewId;
