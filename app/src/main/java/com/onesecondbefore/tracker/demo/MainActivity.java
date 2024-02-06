@@ -28,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
     private EditText mEditServerUrl;
     private Switch mSwitchLocation;
 
+    private OSB mOsb;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,27 +43,41 @@ public class MainActivity extends AppCompatActivity {
             sendEventBackground(view);
 //        } } ).start();
     }
-    public void sendEventBackground(View view) {
+
+    public void showCMP(View view) {
+
+    }
+
+    public void inializeOSB() {
         String accountId = mEditAccountId.getText().toString();
         if (accountId.isEmpty()) {
-            accountId = "development";
+            accountId = "demo";
         }
 
         String serverUrl = mEditServerUrl.getText().toString();
         if (serverUrl.isEmpty()) {
             serverUrl = "https://c.onesecondbefore.com";
         }
-        String siteId = "test." + (System.currentTimeMillis()/1000);
+
+        String siteId = "demo.app";
         Log.i(TAG, "AccountId = " + accountId);
         Log.i(TAG, "ServerUrl = " + serverUrl);
         Log.i(TAG, "siteId = " + siteId);
 
-        OSB osb = OSB.getInstance();
-        osb.config(this, accountId, serverUrl, siteId);
+        mOsb = OSB.getInstance();
+        mOsb.config(this, accountId, serverUrl, siteId);
 
-//        osb.setConsent(new String[]{"marketing", "social", "functional", "advertising"});
+    }
+    public void sendEventBackground(View view) {
 
-        Log.i(TAG, "consent: " + Arrays.toString(osb.getConsent()));
+        inializeOSB();
+
+
+
+
+//        mOsb.setConsent(new String[]{"marketing", "social", "functional", "advertising"});
+
+        Log.i(TAG, "consent: " + Arrays.toString(mOsb.getConsent()));
 //
 //        // TEST 1: Send pageview
 //        HashMap<String, Object> pageData = new HashMap<>();
@@ -71,14 +87,14 @@ public class MainActivity extends AppCompatActivity {
 //
 //        //With helper:
 //        try {
-//            osb.sendPageView("Custom page title", "Custom page title", "https://www.thereferrer.com", "3456");
+//            mOsb.sendPageView("Custom page title", "Custom page title", "https://www.thereferrer.com", "3456");
 //        } catch (IllegalArgumentException ex) {
 //            showHitTypeError();
 //        }
 //
 //        //Without helper:
 //        try {
-//            osb.send(OSB.HitType.PAGEVIEW, pageData);
+//            mOsb.send(OSB.HitType.PAGEVIEW, pageData);
 //        } catch (IllegalArgumentException ex) {
 //            showHitTypeError();
 //        }
@@ -87,11 +103,11 @@ public class MainActivity extends AppCompatActivity {
 //        HashMap<String, Object> data1 = new HashMap<>();
 //        data1.put("page_id", "11111");
 //        data1.put("campaign_id", "1");
-//        osb.set(OSB.SetType.PAGE, data1);
+//        mOsb.set(OSB.SetType.PAGE, data1);
 //        data1.put("page_id", "2222");
 //        data1.put("campaign_id", "2");
 //        try {
-//            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
+//            mOsb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
 //        } catch (IllegalArgumentException ex) {
 //            showHitTypeError();
 //        }
@@ -103,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
 //        data2.put("label", "unit_label");
 //        data2.put("value", 8.9);
 //        try {
-//            osb.send(OSB.HitType.EVENT, data2);
+//            mOsb.send(OSB.HitType.EVENT, data2);
 //        } catch (IllegalArgumentException ex) {
 //            showHitTypeError();
 //        }
@@ -121,14 +137,14 @@ public class MainActivity extends AppCompatActivity {
 //        idsList.add(ids1);
 //        idsList.add(ids2);
 //
-//        osb.setIds(idsList);
+//        mOsb.setIds(idsList);
 //
 //        HashMap<String, Object> data3 = new HashMap<>();
 //        data3.put("category", "unit_test");
 //        data3.put("action", "ids");
 //        data3.put("label", "send");
 //        try {
-//            osb.send(OSB.HitType.EVENT, data3);
+//            mOsb.send(OSB.HitType.EVENT, data3);
 //        } catch (IllegalArgumentException ex) {
 //            showHitTypeError();
 //        }
@@ -152,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
 //        itemData.add(item1);
 //        itemData.add(item2);
 //
-//        osb.set(OSB.SetType.ITEM, itemData);
+//        mOsb.set(OSB.SetType.ITEM, itemData);
         HashMap<String, Object> data4 = new HashMap<>();
         data4.put("id", "abcd1234");
         data4.put("revenue", 2269.12);
@@ -161,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         data4.put("affiliation", "partner_funnel"); // Custom data item
 //
 //        try {
-//            osb.send(OSB.HitType.ACTION, "purchase", data4);
+//            mOsb.send(OSB.HitType.ACTION, "purchase", data4);
 //        } catch (IllegalArgumentException ex) {
 //            showHitTypeError();
 //        }
@@ -175,13 +191,13 @@ public class MainActivity extends AppCompatActivity {
 //
 //        // Without helper
 //        try {
-//            osb.send(OSB.HitType.AGGREGATE, data6);
+//            mOsb.send(OSB.HitType.AGGREGATE, data6);
 //        } catch (IllegalArgumentException ex) {
 //            showHitTypeError();
 //        }
 //        // With helper
 //        try {
-//            osb.sendAggregate("pageview", "scrolldepth", OSB.AggregateType.MAX, 0.8);
+//            mOsb.sendAggregate("pageview", "scrolldepth", OSB.AggregateType.MAX, 0.8);
 //        } catch (IllegalArgumentException ex) {
 //            showHitTypeError();
 //        }
@@ -192,37 +208,37 @@ public class MainActivity extends AppCompatActivity {
 //        data.put("title", "the matrix");
 //        data.put("url", "binge.com");
 //
-//        osb.set(OSB.SetType.PAGE, data);
+//        mOsb.set(OSB.SetType.PAGE, data);
 //
 //        HashMap<String, Object> data1 = new HashMap<>();
 //        data1.put("page_id", "5678");
 //        data1.put("campaign_id", "2");
 //        try {
-//            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
+//            mOsb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
 //        } catch (IllegalArgumentException ex) {
 //            showHitTypeError();
 //        }
 
-//        osb.set(OSB.SetType.PAGE, new HashMap<>());
+//        mOsb.set(OSB.SetType.PAGE, new HashMap<>());
         
-        osb.sendScreenView("screenName", "screenClass");
+        mOsb.sendScreenView("screenName", "screenClass");
 
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
-                osb.sendPageView("pageview url", "pagviewTitle", "pageview referrer","screenview id");
+                mOsb.sendPageView("pageview url", "pagviewTitle", "pageview referrer","screenview id");
             }
         }, 2000);
 
         handler.postDelayed(new Runnable() {
             public void run() {
-                osb.send(OSB.HitType.ACTION, "purchase", data4);
+                mOsb.send(OSB.HitType.ACTION, "purchase", data4);
             }
         }, 3000);
 
         handler.postDelayed(new Runnable() {
             public void run() {
-                osb.sendScreenView("screenName2", "screenClass2");
+                mOsb.sendScreenView("screenName2", "screenClass2");
             }
         }, 4000);
     }
