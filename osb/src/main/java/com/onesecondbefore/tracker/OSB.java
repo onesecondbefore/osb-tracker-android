@@ -4,20 +4,18 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.ViewGroup;
-import android.view.Window;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.webkit.WebSettings;
-import android.widget.LinearLayout;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.DefaultLifecycleObserver;
@@ -39,13 +37,10 @@ import java.util.UUID;
 public final class OSB implements DefaultLifecycleObserver {
     private static final String TAG = "OSB:Api";
     private static OSB mInstance = null;
-
     private Config mConfig = new Config();
     private GpsTracker mGpsTracker = null;
     private ApiQueue mQueue = null;
     private Context mContext;
-
-
     private boolean mIsInitialized = false;
     private String mViewId = calculateViewId();
     private String mEventKey = null;
@@ -55,7 +50,6 @@ public final class OSB implements DefaultLifecycleObserver {
     private ArrayList<Map<String, Object>> mIds = new ArrayList<>();
     private WebView mWebView;
     private AlertDialog mConsentDialog;
-
 
     private static final String SPIdentifier = "osb-shared-preferences";
     private static final String SPConsentKey = "osb-consent";
@@ -95,16 +89,6 @@ public final class OSB implements DefaultLifecycleObserver {
 
     private void hideConsentWebview() {
         mConsentDialog.dismiss();
-//        if (mWebView != null && mWebView.getParent() != null && mActivity != null) {
-//            mActivity.runOnUiThread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    ((ViewGroup) mWebView.getParent()).removeView(mWebView);
-//                    ((ViewGroup) mWebView.getParent()).invalidate();
-//                }
-//            });
-//
-//        }
     }
 
     public void clear() {
@@ -194,24 +178,18 @@ public final class OSB implements DefaultLifecycleObserver {
 
     public void showConsentWebview(Activity activity, Boolean forceShow) {
         if (forceShow || shouldShowConsentWebview()){
-            mWebView = new WebView(activity);
+            View view = LayoutInflater.from(activity).inflate(R.layout.osb_webview, null);
+            mWebView = view.findViewById(R.id.osbwebview);
             mWebView.addJavascriptInterface(this, "osbCmpMessageHandler");
 
             WebSettings webSettings = mWebView.getSettings();
             webSettings.setDomStorageEnabled(true);
             webSettings.setJavaScriptEnabled(true);
 
-            mWebView.loadUrl(getConsentWebviewURL());
-            mWebView.loadUrl("https://tweakers.net");
-            mWebView.setWebViewClient(new OSBWebViewClient());
-
-//            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
-//            mWebView.setLayoutParams(params);
             AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-            mConsentDialog = builder.setView(mWebView).show();
+            mConsentDialog = builder.setView(view.findViewById(R.id.osbwebviewlayout)).show();
 
-//            Window window = mDialog.getWindow();
-//            window.setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+            mWebView.loadUrl(getConsentWebviewURL());
         }
     }
 
@@ -274,7 +252,7 @@ public final class OSB implements DefaultLifecycleObserver {
                 String consentString = consent.getString("tcString");
                 setConsent(consentString);
 
-                int expirationDate = json.getInt("expirationDate");
+                Long expirationDate = json.getLong("expirationDate");
                 setConsentExpiration(expirationDate);
                 String cduid = json.getString("cduid");
                 setCDUID(cduid);
@@ -300,23 +278,20 @@ public final class OSB implements DefaultLifecycleObserver {
         return BuildConfig.versionName;
     }
 
-    private void setConsentExpiration(Integer timestamp) {
+    private void setConsentExpiration(Long timestamp) {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt(SPConsentExpirationKey, timestamp);
+        editor.putLong(SPConsentExpirationKey, timestamp);
         editor.apply();
     }
 
-    private Integer getConsentExpiration() {
+    private Long getConsentExpiration() {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        return preferences.getInt(SPConsentExpirationKey, 0);
+        return preferences.getLong(SPConsentExpirationKey, 0);
     }
 
     private Boolean shouldShowConsentWebview() {
-        if (getConsentExpiration() != null && getConsentExpiration() != 0 && getConsentExpiration() > System.currentTimeMillis()) {
-            return false;
-        }
-        return true;
+        return getConsentExpiration() < System.currentTimeMillis();
     }
 
     private void setCDUID(String cduid) {
@@ -695,18 +670,7 @@ public final class OSB implements DefaultLifecycleObserver {
     public void postMessage(String consentCallbackString) {
         processConsentCallback(consentCallbackString);
     }
-
-    private class OSBWebViewClient extends WebViewClient{
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            view.loadUrl(url);
-            return true;
-        }
-
-        @Override
-        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-           Log.d(TAG, description);
-        }
-    }
 }
+
+
 

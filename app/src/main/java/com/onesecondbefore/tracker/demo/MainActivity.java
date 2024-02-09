@@ -77,8 +77,8 @@ public class MainActivity extends AppCompatActivity {
 
         mOsb = OSB.getInstance();
         mOsb.config(this, accountId, serverUrl, siteId);
-
     }
+
     public void sendEventBackground(View view) {
 
         inializeOSB();
