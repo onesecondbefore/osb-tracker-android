@@ -1,21 +1,27 @@
 package com.onesecondbefore.tracker;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.StrictMode;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
+import android.webkit.WebSettings;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
-
+import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -31,12 +37,10 @@ import java.util.UUID;
 public final class OSB implements DefaultLifecycleObserver {
     private static final String TAG = "OSB:Api";
     private static OSB mInstance = null;
-
     private Config mConfig = new Config();
     private GpsTracker mGpsTracker = null;
     private ApiQueue mQueue = null;
     private Context mContext;
-
     private boolean mIsInitialized = false;
     private String mViewId = calculateViewId();
     private String mEventKey = null;
@@ -44,10 +48,13 @@ public final class OSB implements DefaultLifecycleObserver {
     private Map<String, Object> mHitsData = null;
     private Map<String, Object> mSetDataObject = new HashMap<>();
     private ArrayList<Map<String, Object>> mIds = new ArrayList<>();
-
+    private WebView mWebView;
+    private AlertDialog mConsentDialog;
 
     private static final String SPIdentifier = "osb-shared-preferences";
     private static final String SPConsentKey = "osb-consent";
+    private static final String SPConsentExpirationKey = "osb-consent-expiration";
+    private static final String SPCDUIDKey = "osb-cduid";
 
 
     public enum HitType {
@@ -72,13 +79,16 @@ public final class OSB implements DefaultLifecycleObserver {
         }
     }
 
-
     public static OSB getInstance() {
         if (mInstance == null) {
             mInstance = new OSB();
         }
 
         return mInstance;
+    }
+
+    private void hideConsentWebview() {
+        mConsentDialog.dismiss();
     }
 
     public void clear() {
@@ -166,6 +176,23 @@ public final class OSB implements DefaultLifecycleObserver {
         mConfig.setDebug(isEnabled);
     }
 
+    public void showConsentWebview(Activity activity, Boolean forceShow) {
+        if (forceShow || shouldShowConsentWebview()){
+            View view = LayoutInflater.from(activity).inflate(R.layout.osb_webview, null);
+            mWebView = view.findViewById(R.id.osbwebview);
+            mWebView.addJavascriptInterface(this, "osbCmpMessageHandler");
+
+            WebSettings webSettings = mWebView.getSettings();
+            webSettings.setDomStorageEnabled(true);
+            webSettings.setJavaScriptEnabled(true);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            mConsentDialog = builder.setView(view.findViewById(R.id.osbwebviewlayout)).show();
+
+            mWebView.loadUrl(getConsentWebviewURL());
+        }
+    }
+
     public void set(String name, Map<String, Object> data) {
         mEventKey = name;
         mEventData = data;
@@ -208,11 +235,75 @@ public final class OSB implements DefaultLifecycleObserver {
 
     public String[] getConsent() {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        Set<String> set = preferences.getStringSet(SPConsentKey, null);
+        Set<String> set = preferences.getStringSet(SPConsentKey, new HashSet<String>());
         String[] arr = new String[set.size()];
         set.toArray(arr);
 
         return arr;
+    }
+
+    private void processConsentCallback(String consentCallbackString) {
+        hideConsentWebview();
+
+        try {
+            JSONObject json = convertConsentCallbackToJSON(consentCallbackString);
+            if (json != null) {
+                JSONObject consent = json.getJSONObject("consent");
+                String consentString = consent.getString("tcString");
+                setConsent(consentString);
+
+                Long expirationDate = json.getLong("expirationDate");
+                setConsentExpiration(expirationDate);
+                String cduid = json.getString("cduid");
+                setCDUID(cduid);
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "OSB Error: Could not parse consent JSON.");
+            Log.e(TAG, t.getMessage());
+        }
+    }
+
+    private JSONObject convertConsentCallbackToJSON(String consentCallbackString) {
+        try {
+            JSONObject obj = new JSONObject(consentCallbackString);
+            return obj;
+        } catch (Throwable t) {
+            Log.e(TAG, "OSB Error: Could not parse consentCallbackString to JSON.");
+            Log.e(TAG, t.getMessage());
+            return null;
+        }
+    }
+
+    private String getOSBSDKVersion() {
+        return BuildConfig.versionName;
+    }
+
+    private void setConsentExpiration(Long timestamp) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putLong(SPConsentExpirationKey, timestamp);
+        editor.apply();
+    }
+
+    private Long getConsentExpiration() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        return preferences.getLong(SPConsentExpirationKey, 0);
+    }
+
+    private Boolean shouldShowConsentWebview() {
+        return getConsentExpiration() < System.currentTimeMillis();
+    }
+
+    private void setCDUID(String cduid) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(SPCDUIDKey, cduid);
+        editor.apply();
+    }
+
+    private String getCDUID() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        return preferences.getString(SPCDUIDKey, null);
     }
 
     public void sendScreenView(String screenName) {
@@ -406,6 +497,7 @@ public final class OSB implements DefaultLifecycleObserver {
      * @deprecated This enum is renamed to 'HitType'
      * <p> Use {@link HitType} instead. </p>
      */
+    @Deprecated
     public enum EventType {
         IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING
     }
@@ -414,6 +506,7 @@ public final class OSB implements DefaultLifecycleObserver {
      * @deprecated This method is renamed to 'config'
      * <p> Use {@link OSB#config(Context, String, String, String)} instead. </p>
      */
+    @Deprecated
     public void create(Context context, String accountId, String url) {
         config(context, accountId, url, null);
     }
@@ -422,6 +515,7 @@ public final class OSB implements DefaultLifecycleObserver {
      * @deprecated This method is renamed to 'config'
      * <p> Use {@link OSB#config(Context, String, String, String)} instead. </p>
      */
+    @Deprecated
     public void create(Context context, String accountId, String url, String siteId) {
         config(context, accountId, url, siteId);
     }
@@ -430,6 +524,7 @@ public final class OSB implements DefaultLifecycleObserver {
      * @deprecated This method is renamed to 'config'
      * <p> Use {@link OSB#remove()} instead. </p>
      */
+    @Deprecated
     public void reset() {
         remove();
     }
@@ -460,7 +555,54 @@ public final class OSB implements DefaultLifecycleObserver {
                 set(SetType.PAGE, page);
             }
         }
+    }
 
+    private String getAdvertisingClientId() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            return null;
+        }
+
+        try {
+            AdvertisingIdClient.Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
+            return adInfo != null ? adInfo.getId() : null;
+        } catch (Exception e) {
+            Log.e(TAG, "getAdvertisingClientId - " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    @SuppressLint("HardwareIds")
+    private String getUniqueId() {
+        return Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
+    }
+
+    private String getUserUID()  {
+        if (getCDUID() != null) {
+            return getCDUID();
+        }
+
+        if (getAdvertisingClientId() != null) {
+            return getAdvertisingClientId();
+        }
+
+        if (getUniqueId() != null) {
+            return getUniqueId();
+        }
+
+        Log.e(TAG, "OSB Error: could not get userUID");
+
+        return "";
+    }
+
+    private String getConsentWebviewURL() {
+        String consent = "";
+        if (getConsent().length > 0){
+            consent = getConsent()[0];
+        }
+        var siteIdURL = "&sid=" + mConfig.getSiteId();
+        String urlString = mConfig.getServerUrl() + "/consent?aid=" + mConfig.getAccountId() + siteIdURL + "&type=app&show=true&version=" + getOSBSDKVersion() + "&consent=" + consent + "&cduid=" + getUserUID();
+        return urlString;
     }
 
     private void startGpsTracker() {
@@ -486,7 +628,7 @@ public final class OSB implements DefaultLifecycleObserver {
                 public void run() {
                     JsonGenerator generator = new JsonGenerator(mContext);
                     JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData,
-                            mHitsData, getConsent(), getViewId(event), mIds, mSetDataObject);
+                            mHitsData, getConsent(), getViewId(event), mIds, mSetDataObject, getAdvertisingClientId(), getUniqueId(), getCDUID());
                     mQueue.addToQueue(mConfig.getServerUrl(), jsonData);
                 }
             });
@@ -522,5 +664,13 @@ public final class OSB implements DefaultLifecycleObserver {
                 return "";
         }
     }
+
+    @SuppressWarnings("unused")
+    @JavascriptInterface
+    public void postMessage(String consentCallbackString) {
+        processConsentCallback(consentCallbackString);
+    }
 }
+
+
 

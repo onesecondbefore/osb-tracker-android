@@ -13,8 +13,6 @@ import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.google.android.gms.ads.identifier.AdvertisingIdClient;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,7 +36,7 @@ final class JsonGenerator {
     }
 
     public JSONObject generate(Config config, Event event, String eventKey,
-                               Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent, String viewId, ArrayList<Map<String, Object>> ids, Map<String, Object> setDataObject) {
+                               Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent, String viewId, ArrayList<Map<String, Object>> ids, Map<String, Object> setDataObject, String idfa, String idfv, String cduid) {
 
         mSetDataObject = setDataObject;
 
@@ -50,7 +48,7 @@ final class JsonGenerator {
         JSONObject eventJson = new JSONObject();
         try {
             eventJson.put("sy", getSystemInfo(config, event));
-            eventJson.put("dv", getDeviceInfo(event));
+            eventJson.put("dv", getDeviceInfo(event, idfa, idfv, cduid));
             eventJson.accumulate("hits", hits);
             eventJson.put("pg", getPageInfo(viewId));
             eventJson.put("consent", new JSONArray(Arrays.asList(consent)));
@@ -200,7 +198,7 @@ final class JsonGenerator {
         return json;
     }
 
-    private JSONObject getDeviceInfo(Event event) {
+    private JSONObject getDeviceInfo(Event event, String idfa, String idfv, String cduid) {
         JSONObject json = new JSONObject();
         try {
             Point size = this.getWindowSize();
@@ -209,8 +207,9 @@ final class JsonGenerator {
             json.put("sh", size.y);
             json.put("tz", this.getTimeZoneOffset());
             json.put("lang", this.getLanguage());
-            json.put("idfa", this.getAdvertisingClientId());
-            json.put("idfv", this.getUniqueId());
+            json.put("idfa", idfa);
+            json.put("idfv", idfv);
+            json.put("cduid", cduid);
             json.put("conn", this.getNetworkType());
             json.put("mem", this.getDiskFreeMem());
 
@@ -268,10 +267,7 @@ final class JsonGenerator {
         return locale.getLanguage() + "-" + locale.getCountry();
     }
 
-    @SuppressLint("HardwareIds")
-    private String getUniqueId() {
-        return Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
-    }
+
 
     private String getNetworkType() {
         String type = "offline";
@@ -292,20 +288,7 @@ final class JsonGenerator {
         return type;
     }
 
-    private String getAdvertisingClientId() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            return null;
-        }
 
-        try {
-            AdvertisingIdClient.Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
-            return adInfo != null ? adInfo.getId() : null;
-        } catch (Exception e) {
-            Log.e(TAG, "getAdvertisingClientId - " + e.getMessage());
-        }
-
-        return null;
-    }
 
     private long getDiskFreeMem() {
         long freeMem = 0;

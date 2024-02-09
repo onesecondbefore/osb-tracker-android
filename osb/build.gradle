@@ -2,17 +2,19 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 
 def gitCommitIdAbbrev = 'git rev-parse --verify --short HEAD'.execute().text.trim()
+def versionName = "6.10"
 
 android {
-    compileSdkVersion 33
-    buildToolsVersion '33.0.2'
+    compileSdk 34
+//    buildToolsVersion '33.0.2'
 
     defaultConfig {
-        minSdkVersion 17
-        targetSdkVersion 33
+        minSdk 19
+        targetSdkVersion 34
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
          buildConfigField "String", "gitCommitIdAbbrev", "\"${gitCommitIdAbbrev}\""
+        buildConfigField "String", "versionName", "\"${versionName}\""
     }
 
     buildTypes {
@@ -34,10 +36,10 @@ dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
 
-    implementation "androidx.lifecycle:lifecycle-process:2.6.1"
-    implementation "androidx.lifecycle:lifecycle-common:2.6.1"
+    implementation "androidx.lifecycle:lifecycle-process:2.7.0"
+    implementation "androidx.lifecycle:lifecycle-common:2.7.0"
 
-    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    implementation 'com.google.android.gms:play-services-location:21.1.0'
     implementation 'com.google.android.gms:play-services-ads-identifier:18.0.1'
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
     
