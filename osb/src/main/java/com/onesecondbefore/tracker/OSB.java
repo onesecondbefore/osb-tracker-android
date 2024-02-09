@@ -1,30 +1,31 @@
 package com.onesecondbefore.tracker;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.StrictMode;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
-
-import com.onesecondbefore.tracker.BuildConfig;
-
+import android.view.ViewGroup;
+import android.view.Window;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebSettings;
+import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
-
 import org.json.JSONObject;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ public final class OSB implements DefaultLifecycleObserver {
     private ApiQueue mQueue = null;
     private Context mContext;
 
+
     private boolean mIsInitialized = false;
     private String mViewId = calculateViewId();
     private String mEventKey = null;
@@ -51,6 +53,8 @@ public final class OSB implements DefaultLifecycleObserver {
     private Map<String, Object> mHitsData = null;
     private Map<String, Object> mSetDataObject = new HashMap<>();
     private ArrayList<Map<String, Object>> mIds = new ArrayList<>();
+    private WebView mWebView;
+    private AlertDialog mConsentDialog;
 
 
     private static final String SPIdentifier = "osb-shared-preferences";
@@ -81,13 +85,26 @@ public final class OSB implements DefaultLifecycleObserver {
         }
     }
 
-
     public static OSB getInstance() {
         if (mInstance == null) {
             mInstance = new OSB();
         }
 
         return mInstance;
+    }
+
+    private void hideConsentWebview() {
+        mConsentDialog.dismiss();
+//        if (mWebView != null && mWebView.getParent() != null && mActivity != null) {
+//            mActivity.runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    ((ViewGroup) mWebView.getParent()).removeView(mWebView);
+//                    ((ViewGroup) mWebView.getParent()).invalidate();
+//                }
+//            });
+//
+//        }
     }
 
     public void clear() {
@@ -175,6 +192,29 @@ public final class OSB implements DefaultLifecycleObserver {
         mConfig.setDebug(isEnabled);
     }
 
+    public void showConsentWebview(Activity activity, Boolean forceShow) {
+        if (forceShow || shouldShowConsentWebview()){
+            mWebView = new WebView(activity);
+            mWebView.addJavascriptInterface(this, "osbCmpMessageHandler");
+
+            WebSettings webSettings = mWebView.getSettings();
+            webSettings.setDomStorageEnabled(true);
+            webSettings.setJavaScriptEnabled(true);
+
+            mWebView.loadUrl(getConsentWebviewURL());
+            mWebView.loadUrl("https://tweakers.net");
+            mWebView.setWebViewClient(new OSBWebViewClient());
+
+//            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+//            mWebView.setLayoutParams(params);
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            mConsentDialog = builder.setView(mWebView).show();
+
+//            Window window = mDialog.getWindow();
+//            window.setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+        }
+    }
+
     public void set(String name, Map<String, Object> data) {
         mEventKey = name;
         mEventData = data;
@@ -217,12 +257,45 @@ public final class OSB implements DefaultLifecycleObserver {
 
     public String[] getConsent() {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        Set<String> set = preferences.getStringSet(SPConsentKey, null);
+        Set<String> set = preferences.getStringSet(SPConsentKey, new HashSet<String>());
         String[] arr = new String[set.size()];
         set.toArray(arr);
 
         return arr;
     }
+
+    private void processConsentCallback(String consentCallbackString) {
+        hideConsentWebview();
+
+        try {
+            JSONObject json = convertConsentCallbackToJSON(consentCallbackString);
+            if (json != null) {
+                JSONObject consent = json.getJSONObject("consent");
+                String consentString = consent.getString("tcString");
+                setConsent(consentString);
+
+                int expirationDate = json.getInt("expirationDate");
+                setConsentExpiration(expirationDate);
+                String cduid = json.getString("cduid");
+                setCDUID(cduid);
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "OSB Error: Could not parse consent JSON.");
+            Log.e(TAG, t.getMessage());
+        }
+    }
+
+    private JSONObject convertConsentCallbackToJSON(String consentCallbackString) {
+        try {
+            JSONObject obj = new JSONObject(consentCallbackString);
+            return obj;
+        } catch (Throwable t) {
+            Log.e(TAG, "OSB Error: Could not parse consentCallbackString to JSON.");
+            Log.e(TAG, t.getMessage());
+            return null;
+        }
+    }
+
     private String getOSBSDKVersion() {
         return BuildConfig.versionName;
     }
@@ -547,27 +620,14 @@ public final class OSB implements DefaultLifecycleObserver {
         return "";
     }
 
-
-
-    private URL getConsentWebviewURL() {
+    private String getConsentWebviewURL() {
         String consent = "";
         if (getConsent().length > 0){
-            consent =  getConsent()[0];
+            consent = getConsent()[0];
         }
-
         var siteIdURL = "&sid=" + mConfig.getSiteId();
-
-
         String urlString = mConfig.getServerUrl() + "/consent?aid=" + mConfig.getAccountId() + siteIdURL + "&type=app&show=true&version=" + getOSBSDKVersion() + "&consent=" + consent + "&cduid=" + getUserUID();
-        URL url = null;
-        try {
-            url =  new URL(urlString);
-        } catch (Exception e) {
-           Log.e(TAG, "OSB Error: Couldn't create valid consent webview URL.");
-           Log.e(TAG, e.getMessage());
-        }
-
-        return url;
+        return urlString;
     }
 
     private void startGpsTracker() {
@@ -627,6 +687,25 @@ public final class OSB implements DefaultLifecycleObserver {
                 return "avg";
             default:
                 return "";
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @JavascriptInterface
+    public void postMessage(String consentCallbackString) {
+        processConsentCallback(consentCallbackString);
+    }
+
+    private class OSBWebViewClient extends WebViewClient{
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            view.loadUrl(url);
+            return true;
+        }
+
+        @Override
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+           Log.d(TAG, description);
         }
     }
 }

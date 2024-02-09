@@ -45,7 +45,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showCMP(View view) {
+        showConsentWebview(false);
+    }
 
+    public void resurfaceCMP(View view) {
+        showConsentWebview(true);
+    }
+
+    public void showConsentWebview(Boolean forceShow) {
+        if (mOsb == null) {
+            inializeOSB();
+        }
+        mOsb.showConsentWebview(this, forceShow);
     }
 
     public void inializeOSB() {

@@ -147,6 +147,7 @@
         android:layout_below="@+id/switchLocationView"
         android:layout_marginTop="10dp"
         android:gravity="center"
+        android:orientation="vertical"
         >
         <Button
             android:id="@+id/sendButton"
@@ -157,6 +158,14 @@
             android:paddingLeft="20dp"
             android:paddingRight="20dp"
             />
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/holo_green_light"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"/>
+
         <Button
             android:id="@+id/showCMPButton"
             android:layout_width="wrap_content"
@@ -164,7 +173,15 @@
             android:onClick="showCMP"
             android:text="Show CMP (if needed)"
             android:paddingLeft="20dp"
-            android:paddingRight="20dp"
-            />
+            android:paddingRight="20dp" />
+
+        <Button
+            android:id="@+id/resurfaceCMPButton"
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
+            android:onClick="resurfaceCMP"
+            android:text="Resurface CMP"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp" />
     </LinearLayout>
 </RelativeLayout>
