@@ -21,9 +21,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
+import androidx.preference.PreferenceManager;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
+
 import org.json.JSONObject;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,6 +38,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.iabtcf.decoder.TCString;
+import com.iabtcf.exceptions.TCStringDecodeException;
 
 public final class OSB implements DefaultLifecycleObserver {
     private static final String TAG = "OSB:Api";
@@ -55,6 +67,9 @@ public final class OSB implements DefaultLifecycleObserver {
     private static final String SPConsentKey = "osb-consent";
     private static final String SPConsentExpirationKey = "osb-consent-expiration";
     private static final String SPCDUIDKey = "osb-cduid";
+    private static final String SPRemoteCmpKey = "osb-remote-cmp";
+    private static final String SPLocalCmpKey = "osb-local-cmp";
+    private static final String SPCmpCheckTimestamp = "osb-cmp-check-timestamp";
 
 
     public enum HitType {
@@ -143,7 +158,6 @@ public final class OSB implements DefaultLifecycleObserver {
 
     public void config(Context context, String accountId, String url, String siteId) {
         clear();
-
         if (android.os.Build.VERSION.SDK_INT > 9) {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
@@ -164,13 +178,16 @@ public final class OSB implements DefaultLifecycleObserver {
         mConfig.setServerUrl(url);
         mConfig.setSiteId(siteId);
 
+        fetchRemoteCmpVersion();
+
         mQueue = new ApiQueue(mContext);
         startGpsTracker();
 
         mIsInitialized = true;
         Log.i(TAG, "OSB - Initialized");
-    }
 
+
+    }
 
     public void debug(boolean isEnabled) {
         mConfig.setDebug(isEnabled);
@@ -242,69 +259,6 @@ public final class OSB implements DefaultLifecycleObserver {
         return arr;
     }
 
-    private void processConsentCallback(String consentCallbackString) {
-        hideConsentWebview();
-
-        try {
-            JSONObject json = convertConsentCallbackToJSON(consentCallbackString);
-            if (json != null) {
-                JSONObject consent = json.getJSONObject("consent");
-                String consentString = consent.getString("tcString");
-                setConsent(consentString);
-
-                Long expirationDate = json.getLong("expirationDate");
-                setConsentExpiration(expirationDate);
-                String cduid = json.getString("cduid");
-                setCDUID(cduid);
-            }
-        } catch (Throwable t) {
-            Log.e(TAG, "OSB Error: Could not parse consent JSON.");
-            Log.e(TAG, t.getMessage());
-        }
-    }
-
-    private JSONObject convertConsentCallbackToJSON(String consentCallbackString) {
-        try {
-            JSONObject obj = new JSONObject(consentCallbackString);
-            return obj;
-        } catch (Throwable t) {
-            Log.e(TAG, "OSB Error: Could not parse consentCallbackString to JSON.");
-            Log.e(TAG, t.getMessage());
-            return null;
-        }
-    }
-
-    private String getOSBSDKVersion() {
-        return BuildConfig.versionName;
-    }
-
-    private void setConsentExpiration(Long timestamp) {
-        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putLong(SPConsentExpirationKey, timestamp);
-        editor.apply();
-    }
-
-    private Long getConsentExpiration() {
-        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        return preferences.getLong(SPConsentExpirationKey, 0);
-    }
-
-    private Boolean shouldShowConsentWebview() {
-        return getConsentExpiration() < System.currentTimeMillis();
-    }
-
-    private void setCDUID(String cduid) {
-        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString(SPCDUIDKey, cduid);
-        editor.apply();
-    }
-
-    private String getCDUID() {
-        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        return preferences.getString(SPCDUIDKey, null);
-    }
 
     public void sendScreenView(String screenName) {
         sendScreenView(screenName, null, null);
@@ -491,6 +445,15 @@ public final class OSB implements DefaultLifecycleObserver {
                 break;
         }
     }
+
+    public boolean shouldResurfaceCmp(){
+        if (getRemoteCmpVersion() > getLocalCmpVersion()){
+            setLocalCmpVersion(getRemoteCmpVersion());
+            return true;
+        }
+
+        return false;
+    }
     /* Deprecated Functions */
 
     /**
@@ -530,6 +493,104 @@ public final class OSB implements DefaultLifecycleObserver {
     }
 
     /* Private Functions */
+
+
+    private void processConsentCallback(String consentCallbackString) {
+        hideConsentWebview();
+
+        try {
+            JSONObject json = convertConsentCallbackToJSON(consentCallbackString);
+            if (json != null) {
+                JSONObject consent = json.getJSONObject("consent");
+                String consentString = consent.getString("tcString");
+                setConsent(consentString);
+
+                Long expirationDate = json.getLong("expirationDate");
+                setConsentExpiration(expirationDate);
+                String cduid = json.getString("cduid");
+                setCDUID(cduid);
+
+                decodeAndStoreIABConsent(consentString);
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "OSB Error: Could not parse consent JSON.");
+            Log.e(TAG, t.getMessage());
+        }
+    }
+
+    private JSONObject convertConsentCallbackToJSON(String consentCallbackString) {
+        try {
+            JSONObject obj = new JSONObject(consentCallbackString);
+            return obj;
+        } catch (Throwable t) {
+            Log.e(TAG, "OSB Error: Could not parse consentCallbackString to JSON.");
+            Log.e(TAG, t.getMessage());
+            return null;
+        }
+    }
+
+    private String getOSBSDKVersion() {
+        return BuildConfig.versionName;
+    }
+
+    private void setConsentExpiration(Long timestamp) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putLong(SPConsentExpirationKey, timestamp);
+        editor.apply();
+    }
+
+    private Long getConsentExpiration() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        return preferences.getLong(SPConsentExpirationKey, 0);
+    }
+
+    private Boolean shouldShowConsentWebview() {
+        return getConsentExpiration() < System.currentTimeMillis();
+    }
+
+    private void setCDUID(String cduid) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(SPCDUIDKey, cduid);
+        editor.apply();
+    }
+
+    private String getCDUID() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        return preferences.getString(SPCDUIDKey, null);
+    }
+
+    private void setRemoteCmpVersion(int cmpVersion) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt(SPRemoteCmpKey, cmpVersion);
+        editor.putLong(SPCmpCheckTimestamp, System.currentTimeMillis());
+        editor.apply();
+    }
+
+    private int getRemoteCmpVersion() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        return preferences.getInt(SPRemoteCmpKey, 0);
+    }
+
+    private void setLocalCmpVersion(int cmpVersion) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt(SPLocalCmpKey, cmpVersion);
+        editor.apply();
+    }
+
+    private int getLocalCmpVersion() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        return preferences.getInt(SPLocalCmpKey, 0);
+    }
+
+    private long getCmpCheckTimestamp() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        return preferences.getLong(SPCmpCheckTimestamp, 0);
+    }
+
     private void removeHitScope() {
         mEventData = null;
         mHitsData = null;
@@ -591,7 +652,6 @@ public final class OSB implements DefaultLifecycleObserver {
         }
 
         Log.e(TAG, "OSB Error: could not get userUID");
-
         return "";
     }
 
@@ -665,12 +725,121 @@ public final class OSB implements DefaultLifecycleObserver {
         }
     }
 
+    private void processFetchedCmpResponse(String cmpResponse) {
+        try {
+            JSONObject json = convertCmpResponseToJSON(cmpResponse);
+            if (json != null) {
+                int cmpVersion = json.getInt("cmpVersion");
+                setRemoteCmpVersion(cmpVersion);
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "OSB Error: Could not parse consent JSON.");
+            Log.e(TAG, t.getMessage());
+        }
+    }
+
+    private JSONObject convertCmpResponseToJSON(String cmpResponse) {
+        try {
+            JSONObject obj = new JSONObject(cmpResponse);
+            return obj;
+        } catch (Throwable t) {
+            Log.e(TAG, "OSB Error: Could not parse cmpResponse to JSON.");
+            Log.e(TAG, t.getMessage());
+            return null;
+        }
+    }
+
+    private void fetchRemoteCmpVersion() {
+        if (getCmpCheckTimestamp() + (24 * 60 * 60) < System.currentTimeMillis()){
+            requestRemoteCmpVersion();
+        }
+    }
+
+    private void requestRemoteCmpVersion() {
+        RequestQueue mRequestQueue = Volley.newRequestQueue(mContext);
+        StringRequest mStringRequest = new StringRequest(Request.Method.GET, getCmpVersionUrl(), this::processFetchedCmpResponse, error -> Log.i(TAG,"OSB Error :" + error.toString()));
+        mRequestQueue.add(mStringRequest);
+    }
+
+    private String getCmpVersionUrl() {
+        final HashCode hashCode = Hashing.sha1().hashString(mConfig.getAccountId() + '-' + mConfig.getSiteId(), Charset.defaultCharset());
+        String hash = hashCode.toString().substring(0, 8);
+        return "https://cdn.onesecondbefore.com/cmp/"+hash+".json";
+    }
+
+    private void decodeAndStoreIABConsent(String consent) {
+        SharedPreferences mPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        SharedPreferences.Editor editor = mPreferences.edit();
+        try {
+            TCString tcString = TCString.decode(consent);
+
+            editor.putInt("IABTCF_CmpSdkID", tcString.getCmpId());
+            editor.putInt("IABTCF_CmpSdkVersion", tcString.getCmpVersion());
+            editor.putInt("IABTCF_PolicyVersion", tcString.getTcfPolicyVersion());
+//            editor.putInt("IABTCF_gdprApplies", ); TODO: Check how to implement. ^MB
+            editor.putString("IABTCF_PublisherCC", tcString.getPublisherCC());
+            editor.putInt("IABTCF_PurposeOneTreatment", tcString.getPurposeOneTreatment() ? 1 : 0);
+            editor.putInt("IABTCF_UseNonStandardTexts", tcString.getUseNonStandardStacks() ? 1 : 0);
+            editor.putString("IABTCF_TCString", consent);
+
+            StringBuilder vendorConsents = new StringBuilder();
+            StringBuilder vendorLegitimateInterests = new StringBuilder();
+            StringBuilder purposeConsents = new StringBuilder();
+            StringBuilder purposeLegitimateInterests = new StringBuilder();
+            StringBuilder specialFeaturesOptIns = new StringBuilder();
+            StringBuilder publisherConsents = new StringBuilder();
+            StringBuilder publisherLegitimateInterests = new StringBuilder();
+            StringBuilder publisherCustomPurposesConsents = new StringBuilder();
+            StringBuilder publisherCustomPurposesLegitimateInterests = new StringBuilder();
+
+            for (int i = 1; i <= 11; i++) { // TCF 2.2 contains 11 purposes.
+                vendorConsents.append(tcString.getVendorConsent().contains(i) ? "1" : "0");
+                vendorLegitimateInterests.append(tcString.getVendorLegitimateInterest().contains(i) ? "1" : "0");
+                purposeConsents.append(tcString.getPurposesConsent().contains(i) ? "1" : "0");
+                purposeLegitimateInterests.append(tcString.getPurposesLITransparency().contains(i) ? "1" : "0");
+                specialFeaturesOptIns.append(tcString.getSpecialFeatureOptIns().contains(i) ? "1" : "0");
+                publisherConsents.append(tcString.getPurposesConsent().contains(i) ? "1" : "0");
+                publisherLegitimateInterests.append(tcString.getPubPurposesLITransparency().contains(i) ? "1" : "0");
+                publisherCustomPurposesConsents.append(tcString.getCustomPurposesConsent().contains(i) ? "1" : "0");
+                publisherCustomPurposesLegitimateInterests.append(tcString.getCustomPurposesLITransparency().contains(i) ? "1" : "0");
+            }
+            editor.putString("IABTCF_VendorConsents", vendorConsents.toString());
+            editor.putString("IABTCF_VendorLegitimateInterests", vendorLegitimateInterests.toString());
+            editor.putString("IABTCF_PurposeConsents", purposeConsents.toString());
+            editor.putString("IABTCF_PurposeLegitimateInterests", purposeLegitimateInterests.toString());
+            editor.putString("IABTCF_SpecialFeaturesOptIns", specialFeaturesOptIns.toString());
+//            IABTCF_PublisherRestrictions{ID} TODO: Check how to implement. ^MB
+            editor.putString("IABTCF_PublisherConsent", publisherConsents.toString());
+            editor.putString("IABTCF_PublisherLegitimateInterests", publisherLegitimateInterests.toString());
+            editor.putString("IABTCF_PublisherCustomPurposesConsents", publisherCustomPurposesConsents.toString());
+            editor.putString("IABTCF_PublisherCustomPurposesLegitimateInterests", publisherCustomPurposesLegitimateInterests.toString());
+
+        } catch (TCStringDecodeException ex) {
+            editor.remove("IABTCF_TCString");
+            editor.remove("IABTCF_CmpSdkID");
+            editor.remove("IABTCF_CmpSdkVersion");
+            editor.remove("IABTCF_PolicyVersion");
+            editor.remove("IABTCF_PublisherCC");
+            editor.remove("IABTCF_PurposeOneTreatment");
+            editor.remove("IABTCF_UseNonStandardTexts");
+            editor.remove("IABTCF_TCString");
+            editor.remove("IABTCF_VendorConsents");
+            editor.remove("IABTCF_VendorLegitimateInterests");
+            editor.remove("IABTCF_PurposeConsents");
+            editor.remove("IABTCF_PurposeLegitimateInterests");
+            editor.remove("IABTCF_SpecialFeaturesOptIns");
+            editor.remove("IABTCF_PublisherConsent");
+            editor.remove("IABTCF_PublisherLegitimateInterests");
+            editor.remove("IABTCF_PublisherCustomPurposesConsents");
+            editor.remove("IABTCF_PublisherCustomPurposesLegitimateInterests");
+        } finally {
+            editor.commit();
+        }
+    }
+
     @SuppressWarnings("unused")
     @JavascriptInterface
     public void postMessage(String consentCallbackString) {
         processConsentCallback(consentCallbackString);
     }
 }
-
-
-

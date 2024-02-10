@@ -2,11 +2,10 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 
 def gitCommitIdAbbrev = 'git rev-parse --verify --short HEAD'.execute().text.trim()
-def versionName = "6.10"
+def versionName = "7.1"
 
 android {
     compileSdk 34
-//    buildToolsVersion '33.0.2'
 
     defaultConfig {
         minSdk 19
@@ -35,13 +34,17 @@ dependencies {
     //implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
-
     implementation "androidx.lifecycle:lifecycle-process:2.7.0"
     implementation "androidx.lifecycle:lifecycle-common:2.7.0"
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'com.android.volley:volley:1.2.1'
 
     implementation 'com.google.android.gms:play-services-location:21.1.0'
     implementation 'com.google.android.gms:play-services-ads-identifier:18.0.1'
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+    implementation 'com.google.guava:guava:33.0.0-android'
+
+    implementation 'com.iabtcf:iabtcf-decoder:2.0.10'
     
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
@@ -52,7 +55,7 @@ publishing {
     publications {
         publication(MavenPublication) {
             groupId 'com.onesecondbefore.tracker'
-            version '6.10'
+            version '7.1'
             artifactId 'tracker-android'
             artifact("$buildDir/outputs/aar/osb-release.aar")
 
