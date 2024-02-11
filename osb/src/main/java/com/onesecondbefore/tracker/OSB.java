@@ -684,11 +684,13 @@ public final class OSB implements DefaultLifecycleObserver {
 
             final Event event = new Event(type, actionType, data,
                     mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
+
+            String viewId = getViewId(event);
             Thread t = new Thread(new Runnable() {
                 public void run() {
                     JsonGenerator generator = new JsonGenerator(mContext);
                     JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData,
-                            mHitsData, getConsent(), getViewId(event), mIds, mSetDataObject, getAdvertisingClientId(), getUniqueId(), getCDUID());
+                            mHitsData, getConsent(), viewId, mIds, mSetDataObject, getAdvertisingClientId(), getUniqueId(), getCDUID());
                     mQueue.addToQueue(mConfig.getServerUrl(), jsonData);
                 }
             });
