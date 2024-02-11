@@ -546,6 +546,9 @@ public final class OSB implements DefaultLifecycleObserver {
     }
 
     private Boolean shouldShowConsentWebview() {
+        if (shouldResurfaceCmp()) {
+            return true;
+        }
         return getConsentExpiration() < System.currentTimeMillis();
     }
 
@@ -752,7 +755,7 @@ public final class OSB implements DefaultLifecycleObserver {
     }
 
     private void fetchRemoteCmpVersion() {
-        if (getCmpCheckTimestamp() + (24 * 60 * 60) < System.currentTimeMillis()){
+        if (getCmpCheckTimestamp() + (24 * 60 * 60 * 1000) < System.currentTimeMillis()){
             requestRemoteCmpVersion();
         }
     }
@@ -778,7 +781,7 @@ public final class OSB implements DefaultLifecycleObserver {
             editor.putInt("IABTCF_CmpSdkID", tcString.getCmpId());
             editor.putInt("IABTCF_CmpSdkVersion", tcString.getCmpVersion());
             editor.putInt("IABTCF_PolicyVersion", tcString.getTcfPolicyVersion());
-//            editor.putInt("IABTCF_gdprApplies", ); TODO: Check how to implement. ^MB
+            editor.putInt("IABTCF_gdprApplies", 1);
             editor.putString("IABTCF_PublisherCC", tcString.getPublisherCC());
             editor.putInt("IABTCF_PurposeOneTreatment", tcString.getPurposeOneTreatment() ? 1 : 0);
             editor.putInt("IABTCF_UseNonStandardTexts", tcString.getUseNonStandardStacks() ? 1 : 0);
@@ -810,7 +813,7 @@ public final class OSB implements DefaultLifecycleObserver {
             editor.putString("IABTCF_PurposeConsents", purposeConsents.toString());
             editor.putString("IABTCF_PurposeLegitimateInterests", purposeLegitimateInterests.toString());
             editor.putString("IABTCF_SpecialFeaturesOptIns", specialFeaturesOptIns.toString());
-//            IABTCF_PublisherRestrictions{ID} TODO: Check how to implement. ^MB
+//            IABTCF_PublisherRestrictions{ID} TODO: implement. ^MB
             editor.putString("IABTCF_PublisherConsent", publisherConsents.toString());
             editor.putString("IABTCF_PublisherLegitimateInterests", publisherLegitimateInterests.toString());
             editor.putString("IABTCF_PublisherCustomPurposesConsents", publisherCustomPurposesConsents.toString());
