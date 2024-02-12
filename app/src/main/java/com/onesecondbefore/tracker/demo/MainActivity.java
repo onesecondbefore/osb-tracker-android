@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
         }, 1000);
 
 
-        // TEST 2: Set page & send viewable_impression
+        // TEST 2: Set page data & send viewable_impression
         handler.postDelayed(new Runnable() {
             public void run() {
                 HashMap<String, Object> data1 = new HashMap<>();
@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         }, 2000);
 
 
-        //With helper:
+        // TEST 3: Set page data & send viewable_impression
         handler.postDelayed(new Runnable() {
             public void run() {
                 try {
@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         }, 3000);
 
 
-        // TEST 3: Send event, still with page data from previous set
+        // TEST 4: Send event, still with page data from previous set
         handler.postDelayed(new Runnable() {
             public void run() {
                 HashMap<String, Object> data2 = new HashMap<>();
@@ -151,14 +151,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }, 4000);
 
-//        Test 4: screenview (moet ook een vid genereren)
+//        Test 5: screenview (moet ook een vid genereren)
         handler.postDelayed(new Runnable() {
             public void run() {
                 mOsb.sendScreenView("screenName", "screenClass");
             }
         }, 5000);
 
-        // TEST 3: Send event, still with page data from previous set
+        // TEST 6: Send event
         handler.postDelayed(new Runnable() {
             public void run() {
                 HashMap<String, Object> data3 = new HashMap<>();
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
             }
             }, 6000);
 
-        //TEST 5: Action
+        //TEST 7: Action
         handler.postDelayed(new Runnable() {
             public void run() {
                 Map<String, Object> item1 = new HashMap<>();
@@ -213,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }, 7000);
 //
-        // TEST 6: Aggregate
+        // TEST 8: Aggregate
         handler.postDelayed(new Runnable() {
             public void run() {
 //                Map<String, Object> data6 = new HashMap<>();
