@@ -31,6 +31,7 @@ import org.json.JSONObject;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -800,16 +801,30 @@ public final class OSB implements DefaultLifecycleObserver {
             StringBuilder publisherCustomPurposesLegitimateInterests = new StringBuilder();
 
             for (int i = 1; i <= 11; i++) { // TCF 2.2 contains 11 purposes.
-                vendorConsents.append(tcString.getVendorConsent().contains(i) ? "1" : "0");
-                vendorLegitimateInterests.append(tcString.getVendorLegitimateInterest().contains(i) ? "1" : "0");
                 purposeConsents.append(tcString.getPurposesConsent().contains(i) ? "1" : "0");
                 purposeLegitimateInterests.append(tcString.getPurposesLITransparency().contains(i) ? "1" : "0");
-                specialFeaturesOptIns.append(tcString.getSpecialFeatureOptIns().contains(i) ? "1" : "0");
                 publisherConsents.append(tcString.getPurposesConsent().contains(i) ? "1" : "0");
                 publisherLegitimateInterests.append(tcString.getPubPurposesLITransparency().contains(i) ? "1" : "0");
                 publisherCustomPurposesConsents.append(tcString.getCustomPurposesConsent().contains(i) ? "1" : "0");
                 publisherCustomPurposesLegitimateInterests.append(tcString.getCustomPurposesLITransparency().contains(i) ? "1" : "0");
             }
+
+            Set<Integer> vendorIds = tcString.getVendorConsent().toSet();
+            int maxId = 0;
+            for (int i: vendorIds) {
+                if (maxId < i) {
+                    maxId = i;
+                }
+            }
+            for (int i = 1; i <= maxId; i++) {
+                vendorConsents.append(tcString.getVendorConsent().contains(i) ? "1" : "0");
+                vendorLegitimateInterests.append(tcString.getVendorLegitimateInterest().contains(i) ? "1" : "0");
+            }
+
+            for (int i = 1; i <= 2; i++) {
+                specialFeaturesOptIns.append(tcString.getSpecialFeatureOptIns().contains(i) ? "1" : "0");
+            }
+
             editor.putString("IABTCF_VendorConsents", vendorConsents.toString());
             editor.putString("IABTCF_VendorLegitimateInterests", vendorLegitimateInterests.toString());
             editor.putString("IABTCF_PurposeConsents", purposeConsents.toString());
