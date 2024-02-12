@@ -115,7 +115,7 @@ final class JsonGenerator {
                         }
                     }
                     break;
-                case ACTION:
+                default:
                     List<Map<String, Object>> actionData = getSetDataForType(OSB.SetType.ACTION);
                     if (actionData != null) {
                         for (Map<String, Object> actionObj : actionData) {
@@ -135,8 +135,6 @@ final class JsonGenerator {
                     if (itemData != null) {
                         hitObj.put("items", new JSONArray(itemData));
                     }
-                    break;
-                default:
                     break;
             }
 
@@ -268,7 +266,6 @@ final class JsonGenerator {
     }
 
 
-
     private String getNetworkType() {
         String type = "offline";
         try {
@@ -287,7 +284,6 @@ final class JsonGenerator {
 
         return type;
     }
-
 
 
     private long getDiskFreeMem() {
