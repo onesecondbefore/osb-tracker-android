@@ -94,8 +94,8 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 HashMap<String, Object> pageData = new HashMap<>();
                 pageData.put("id", "1234");
-                pageData.put("title", "The Great Escape");
-                pageData.put("url", "https://www.binge.nl");
+                pageData.put("title", "Onesecondbefore");
+                pageData.put("url", "https://www.onesecondbefore.com");
 
                 //Without helper:
                 try {
