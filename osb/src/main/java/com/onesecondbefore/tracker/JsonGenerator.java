@@ -88,7 +88,7 @@ final class JsonGenerator {
         JSONObject dataObj = new JSONObject();
 
         try {
-            // Always add page data ^MB
+            // Always add page, action & item data ^MB
             List<Map<String, Object>> pageData = getSetDataForType(OSB.SetType.PAGE);
             if (pageData != null) {
                 for (Map<String, Object> page : pageData) {
@@ -98,6 +98,26 @@ final class JsonGenerator {
                         } // If it's a special key we will have added it to the page (pg) object ^MB
                     }
                 }
+            }
+
+            List<Map<String, Object>> actionData = getSetDataForType(OSB.SetType.ACTION);
+            if (actionData != null) {
+                for (Map<String, Object> actionObj : actionData) {
+                    if (actionObj != null) {
+                        for (Map.Entry<String, Object> entry : actionObj.entrySet()) {
+                            if (isSpecialKey(entry.getKey(), OSB.HitType.ACTION)) {
+                                hitObj.put(entry.getKey(), entry.getValue());
+                            } else {
+                                dataObj.put(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    }
+                }
+            }
+
+            List<Map<String, Object>> itemData = getSetDataForType(OSB.SetType.ITEM);
+            if (itemData != null) {
+                hitObj.put("items", new JSONArray(itemData));
             }
 
             switch (event.getType()) {
@@ -116,25 +136,6 @@ final class JsonGenerator {
                     }
                     break;
                 default:
-                    List<Map<String, Object>> actionData = getSetDataForType(OSB.SetType.ACTION);
-                    if (actionData != null) {
-                        for (Map<String, Object> actionObj : actionData) {
-                            if (actionObj != null) {
-                                for (Map.Entry<String, Object> entry : actionObj.entrySet()) {
-                                    if (isSpecialKey(entry.getKey(), OSB.HitType.ACTION)) {
-                                        hitObj.put(entry.getKey(), entry.getValue());
-                                    } else {
-                                        dataObj.put(entry.getKey(), entry.getValue());
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    List<Map<String, Object>> itemData = getSetDataForType(OSB.SetType.ITEM);
-                    if (itemData != null) {
-                        hitObj.put("items", new JSONArray(itemData));
-                    }
                     break;
             }
 
