@@ -101,18 +101,22 @@ final class JsonGenerator {
             }
 
             List<Map<String, Object>> actionData = getSetDataForType(OSB.SetType.ACTION);
+            JSONObject actionJsonObj = new JSONObject();
             if (actionData != null) {
                 for (Map<String, Object> actionObj : actionData) {
                     if (actionObj != null) {
                         for (Map.Entry<String, Object> entry : actionObj.entrySet()) {
                             if (isSpecialKey(entry.getKey(), OSB.HitType.ACTION)) {
-                                hitObj.put(entry.getKey(), entry.getValue());
+                                actionJsonObj.put(entry.getKey(), entry.getValue());
                             } else {
                                 dataObj.put(entry.getKey(), entry.getValue());
                             }
                         }
                     }
                 }
+            }
+            if (actionJsonObj.length() > 0) {
+                hitObj.put("action", actionJsonObj);
             }
 
             List<Map<String, Object>> itemData = getSetDataForType(OSB.SetType.ITEM);
@@ -317,7 +321,7 @@ final class JsonGenerator {
             case PAGEVIEW:
                 return key.equals("title") || key.equals("id") || key.equals("url") || key.equals("ref") || key.equals("osc_id") || key.equals("osc_label") || key.equals("oss_keyword") || key.equals("oss_category") || key.equals("oss_total_results") || key.equals("oss_results_per_page") || key.equals("oss_current_page");
             case ACTION:
-                return key.equals("tax") || key.equals("id") || key.equals("discount") || key.equals("currencyCode") || key.equals("revenue") || key.equals("currency_code");
+                return key.equals("tax") || key.equals("id") || key.equals("discount") || key.equals("currencyCode") || key.equals("revenue") || key.equals("currency_code") || key.equals("shipping");
             default:
                 return false;
         }
