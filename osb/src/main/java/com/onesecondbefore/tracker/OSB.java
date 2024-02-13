@@ -455,6 +455,7 @@ public final class OSB implements DefaultLifecycleObserver {
 
         return false;
     }
+
     /* Deprecated Functions */
 
     /**
@@ -512,6 +513,7 @@ public final class OSB implements DefaultLifecycleObserver {
                 setCDUID(cduid);
 
                 decodeAndStoreIABConsent(consentString);
+                setLocalCmpVersion(getRemoteCmpVersion());
             }
         } catch (Throwable t) {
             Log.e(TAG, "OSB Error: Could not parse consent JSON.");
