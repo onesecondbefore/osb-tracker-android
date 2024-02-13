@@ -92,6 +92,14 @@ public class MainActivity extends AppCompatActivity {
         // TEST 1: Send pageview
         handler.postDelayed(new Runnable() {
             public void run() {
+
+//                HashMap<String, Object> ids = new HashMap<>();
+//                ids.put("key", "email");
+//                ids.put("value", 'test@hotmail.com');
+//                ids.put("hash", 1);
+//                mOsb.set(OSB.SetType.IDS, ids);
+
+
                 HashMap<String, Object> pageData = new HashMap<>();
                 pageData.put("id", "1234");
                 pageData.put("title", "Onesecondbefore");
