@@ -13,13 +13,10 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.util.Log;
-
 import org.json.JSONObject;
-
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
-
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -27,8 +24,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 class ApiTask {
-    private JSONObject mData;
-    private String mUrl;
+    private final JSONObject mData;
+    private final String mUrl;
 
     ApiTask(String url, JSONObject data) {
         this.mData = data;
@@ -48,8 +45,8 @@ class ApiQueue {
     private static final String TAG = "OSB:Queue";
     private final LinkedList<ApiTask> mQueue = new LinkedList<>();
     private boolean mIsEnabled = true;
-    private Context mContext;
-    private String mUserAgent;
+    private final Context mContext;
+    private final String mUserAgent;
 
 
     ApiQueue(Context context) {
@@ -139,47 +136,6 @@ class ApiQueue {
             Log.e(TAG, "Could not POST request: " + ex.getMessage());
         }
     }
-
-
-//    private void sendPostRequest(String url, String data) {
-//        HttpURLConnection httpURLConnection = null;
-//
-//        Log.i(TAG, "Sending request to " + url);
-//        try {
-//            httpURLConnection = (HttpURLConnection) new URL(url).openConnection();
-//            httpURLConnection.setRequestMethod("POST");
-//            httpURLConnection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-//            httpURLConnection.setRequestProperty("Accept", "application/json");
-//            httpURLConnection.setRequestProperty("User-Agent", OSB.userAgent);
-//            httpURLConnection.setDoOutput(true);
-//
-//            DataOutputStream wr = new DataOutputStream(httpURLConnection.getOutputStream());
-//            wr.writeBytes(data);
-//            wr.flush();
-//            wr.close();
-//
-//            InputStream in = httpURLConnection.getInputStream();
-//            InputStreamReader inputStreamReader = new InputStreamReader(in);
-//
-//            StringBuilder response = new StringBuilder();
-//            int inputStreamData = inputStreamReader.read();
-//            while (inputStreamData != -1) {
-//                char current = (char) inputStreamData;
-//                response.append(current);
-//                inputStreamData = inputStreamReader.read();
-//            }
-//
-//            Log.i(TAG, "Got Response: " + response.toString());
-//        } catch (Exception e) {
-//            Log.e(TAG, "sendPostRequest - " + e.getMessage());
-//        }  finally {
-//            if (httpURLConnection != null) {
-//                httpURLConnection.disconnect();
-//            }
-//
-//            processQueue();
-//        }
-//    }
 
     private boolean isNetworkConnected() {
         boolean isOnline = false;

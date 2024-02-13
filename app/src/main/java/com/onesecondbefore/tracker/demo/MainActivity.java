@@ -7,9 +7,10 @@ package com.onesecondbefore.tracker.demo;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
 
@@ -32,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
     private EditText mEditServerUrl;
     private Switch mSwitchLocation;
 
+    private OSB mOsb;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,164 +44,256 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendEvent(View view) {
-        new Thread( new Runnable() { @Override public void run() {
+//        new Thread( new Runnable() { @Override public void run() {
             sendEventBackground(view);
-        } } ).start();
+//        } } ).start();
     }
+
+    public void showCMP(View view) {
+        showConsentWebview(false);
+    }
+
+    public void resurfaceCMP(View view) {
+        showConsentWebview(true);
+    }
+
+    public void showConsentWebview(Boolean forceShow) {
+        if (mOsb == null) {
+            inializeOSB();
+        }
+        mOsb.showConsentWebview(this, forceShow);
+    }
+
+    public void inializeOSB() {
+        String accountId = mEditAccountId.getText().toString();
+        if (accountId.isEmpty()) {
+            accountId = "demo";
+        }
+
+        String serverUrl = mEditServerUrl.getText().toString();
+        if (serverUrl.isEmpty()) {
+            serverUrl = "https://c.onesecondbefore.com";
+        }
+
+        String siteId = "demo.app";
+        Log.i(TAG, "AccountId = " + accountId);
+        Log.i(TAG, "ServerUrl = " + serverUrl);
+        Log.i(TAG, "siteId = " + siteId);
+
+        mOsb = OSB.getInstance();
+        mOsb.config(this, accountId, serverUrl, siteId);
+    }
+
     public void sendEventBackground(View view) {
-        Log.i(TAG,
-                "view = " + ((Button) view).getText().toString());
 
-//        String accountId = mEditAccountId.getText().toString();
-//        if (accountId.isEmpty()) {
-//            accountId = "osb.sandbox";
-//        }
-//
-//        String serverUrl = mEditServerUrl.getText().toString();
-//        if (serverUrl.isEmpty()) {
-//            serverUrl = "https://c.onesecondbefore.com";
-//        }
-//        String siteId = "test." + (System.currentTimeMillis()/1000);
-//        Log.i(TAG, "AccountId = " + accountId);
-//        Log.i(TAG, "ServerUrl = " + serverUrl);
-//        Log.i(TAG, "siteId = " + siteId);
-//
-//        OSB osb = OSB.getInstance();
-//        osb.config(this, accountId, serverUrl, siteId);
-//
-//        osb.setConsent(new String[]{"marketing", "social", "functional", "advertising"});
+        inializeOSB();
 
-//        Log.i(TAG, "consent: " + Arrays.toString(osb.getConsent()));
+        Handler handler = new Handler();
 
+//        mOsb.setConsent(new String[]{"marketing", "social", "functional", "advertising"});
+
+        Log.i(TAG, "consent: " + Arrays.toString(mOsb.getConsent()));
+//
         // TEST 1: Send pageview
-//        HashMap<String, Object> pageData = new HashMap<>();
-//        pageData.put("id", "1234");
-//        pageData.put("title", "The Great Escape");
-//        pageData.put("url", "https://www.binge.nl");
+        handler.postDelayed(new Runnable() {
+            public void run() {
+
+//                HashMap<String, Object> ids = new HashMap<>();
+//                ids.put("key", "email");
+//                ids.put("value", 'test@hotmail.com');
+//                ids.put("hash", 1);
+//                mOsb.set(OSB.SetType.IDS, ids);
+
+
+                HashMap<String, Object> pageData = new HashMap<>();
+                pageData.put("id", "1234");
+                pageData.put("title", "Onesecondbefore");
+                pageData.put("url", "https://www.onesecondbefore.com");
+
+                //Without helper:
+                try {
+                    mOsb.send(OSB.HitType.PAGEVIEW, pageData);
+                } catch (IllegalArgumentException ex) {
+                    showHitTypeError();
+                }
+            }
+        }, 1000);
+
+
+        // TEST 2: Set page data & send viewable_impression
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                HashMap<String, Object> data1 = new HashMap<>();
+                data1.put("page_id", "11111");
+                data1.put("campaign_id", "1");
+                mOsb.set(OSB.SetType.PAGE, data1);
+                try {
+                    mOsb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
+                } catch (IllegalArgumentException ex) {
+                    showHitTypeError();
+                }
+            }
+        }, 2000);
+
+
+        // TEST 3: Set page data & send viewable_impression
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                try {
+                    mOsb.sendPageView("https://www.theurl.com", "Custom page title", "https://www.thereferrer.com", "3456");
+                } catch (IllegalArgumentException ex) {
+                    showHitTypeError();
+                }
+            }
+        }, 3000);
+
+
+        // TEST 4: Send event, still with page data from previous set
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                HashMap<String, Object> data2 = new HashMap<>();
+                data2.put("category", "unit_test");
+                data2.put("action", "unit_action");
+                data2.put("label", "unit_label");
+                data2.put("value", 8.9);
+                try {
+                    mOsb.send(OSB.HitType.EVENT, data2);
+                } catch (IllegalArgumentException ex) {
+                    showHitTypeError();
+                }
+            }
+        }, 4000);
+
+//        Test 5: screenview (moet ook een vid genereren)
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                mOsb.sendScreenView("screenName", "screenClass");
+            }
+        }, 5000);
+
+        // TEST 6: Send event
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                HashMap<String, Object> data3 = new HashMap<>();
+                data3.put("category", "test after screenview");
+                data3.put("action", "some action");
+                data3.put("label", "some label");
+                data3.put("value", 8.9);
+                try {
+                    mOsb.send(OSB.HitType.EVENT, data3);
+                } catch (IllegalArgumentException ex) {
+                    showHitTypeError();
+                }
+            }
+            }, 6000);
+
+        //TEST 7: Action
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                Map<String, Object> item1 = new HashMap<>();
+                item1.put("id", "sku123");
+                item1.put("name", "Apple iPhone 14 Pro");
+                item1.put("category", "mobile");
+                item1.put("price", 1234.56);
+                item1.put("quantity", 1);
+
+                Map<String, Object> item2 = new HashMap<>();
+                item2.put("id", "sku234");
+                item2.put("name", "Samsung Galaxy S22");
+                item2.put("category", "mobile");
+                item2.put("price", 1034.56);
+                item2.put("quantity", 1);
+
+                List<Map<String, Object>> itemData = new ArrayList<>();
+                itemData.add(item1);
+                itemData.add(item2);
+
+                mOsb.set(OSB.SetType.ITEM, itemData);
+
+                HashMap<String, Object> data4 = new HashMap<>();
+                data4.put("id", "abcd1234");
+                data4.put("revenue", 2269.12);
+                data4.put("tax", (2269.12 * 0.21));
+                data4.put("shipping", 100);
+                data4.put("affiliation", "partner_funnel"); // Custom data item
+                mOsb.set(OSB.SetType.ACTION, data4);
+
+                try {
+                    mOsb.sendPageView("https://www.onesecondbefore.com/thankyou.html", "Thank you page", "https://www.onesecondbefore.com/payment.html", "3456");
+                } catch (IllegalArgumentException ex) {
+                    showHitTypeError();
+                }
+            }
+        }, 7000);
 //
-//        //With helper:
-//        try {
-//            osb.sendPageView("Custom page title", "Custom page title", "https://www.thereferrer.com", "3456");
-//        } catch (IllegalArgumentException ex) {
-//            showHitTypeError();
-//        }
+        // TEST 8: Aggregate
+        handler.postDelayed(new Runnable() {
+            public void run() {
+//                Map<String, Object> data6 = new HashMap<>();
+//                data6.put("scope", "pageview");
+//                data6.put("name", "scrolldepth");
+//                data6.put("aggregate", OSB.AggregateType.MAX);
+//                data6.put("value", 0.8);
 //
-//        //Without helper:
-//        try {
-//            osb.send(OSB.HitType.PAGEVIEW, pageData);
-//        } catch (IllegalArgumentException ex) {
-//            showHitTypeError();
-//        }
+//                // Without helper
+//                try {
+//                    mOsb.send(OSB.HitType.AGGREGATE, data6);
+//                } catch (IllegalArgumentException ex) {
+//                    showHitTypeError();
+//                }
+                try {
+                    mOsb.sendAggregate("pageview", "scrolldepth", OSB.AggregateType.MAX, 0.8);
+                } catch (IllegalArgumentException ex) {
+                    showHitTypeError();
+                }
+            }
+        }, 8000);
+//        // With helper
+
+
+
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("id", "12345");
+//        data.put("title", "the matrix");
+//        data.put("url", "binge.com");
 //
-//        // TEST 2: Set page & send viewable_impression
+//        mOsb.set(OSB.SetType.PAGE, data);
+//
 //        HashMap<String, Object> data1 = new HashMap<>();
 //        data1.put("page_id", "5678");
 //        data1.put("campaign_id", "2");
 //        try {
-//            osb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
+//            mOsb.send(OSB.HitType.VIEWABLE_IMPRESSION, data1);
 //        } catch (IllegalArgumentException ex) {
 //            showHitTypeError();
 //        }
+
+//        mOsb.set(OSB.SetType.PAGE, new HashMap<>());
+
 //
-//        // TEST 3: Send event, still with page data from previous set
-//        HashMap<String, Object> data2 = new HashMap<>();
-//        data2.put("category", "unit_test");
-//        data2.put("action", "unit_action");
-//        data2.put("label", "unit_label");
-//        data2.put("value", 8.9);
-//        try {
-//            osb.send(OSB.HitType.EVENT, data2);
-//        } catch (IllegalArgumentException ex) {
-//            showHitTypeError();
-//        }
+//        Handler handler = new Handler();
+//        handler.postDelayed(new Runnable() {
+//            public void run() {
+//                mOsb.sendPageView("pageview url", "pagviewTitle", "pageview referrer","screenview id");
+//            }
+//        }, 2000);
 //
-//        // TEST 4: Send ids with an event
-//        Map<String, Object> ids1 = new HashMap<>();
-//        ids1.put("key", "a3");
-//        ids1.put("value", "12345");
-//
-//        Map<String, Object> ids2 = new HashMap<>();
-//        ids2.put("key", "b4");
-//        ids2.put("value", "6789");
-//
-//        ArrayList<Map<String, Object>> idsList = new ArrayList<>();
-//        idsList.add(ids1);
-//        idsList.add(ids2);
-//
-//        osb.setIds(idsList);
-//
-//        HashMap<String, Object> data3 = new HashMap<>();
-//        data3.put("category", "unit_test");
-//        data3.put("action", "ids");
-//        data3.put("label", "send");
-//        try {
-//            osb.send(OSB.HitType.EVENT, data3);
-//        } catch (IllegalArgumentException ex) {
-//            showHitTypeError();
-//        }
-//
-//        //TEST 5: Action
-//        Map<String, Object> item1 = new HashMap<>();
-//        item1.put("id", "sku123");
-//        item1.put("name", "Apple iPhone 14 Pro");
-//        item1.put("category", "mobile");
-//        item1.put("price", 1234.56);
-//        item1.put("quantity", 1);
-//
-//        Map<String, Object> item2 = new HashMap<>();
-//        item2.put("id", "sku234");
-//        item2.put("name", "Samsung Galaxy S22");
-//        item2.put("category", "mobile");
-//        item2.put("price", 1034.56);
-//        item2.put("quantity", 1);
-//
-//        List<Map<String, Object>> itemData = new ArrayList<>();
-//        itemData.add(item1);
-//        itemData.add(item2);
-//
-//        osb.set(OSB.SetType.ITEM, itemData);
-//        HashMap<String, Object> data4 = new HashMap<>();
-//        data4.put("id", "abcd1234");
-//        data4.put("revenue", 2269.12);
-//        data4.put("tax", (2269.12 * 0.21));
-//        data4.put("shipping", 100);
-//        data4.put("affiliation", "partner_funnel"); // Custom data item
-//
-//        try {
-//            osb.send(OSB.HitType.ACTION, "purchase", data4);
-//        } catch (IllegalArgumentException ex) {
-//            showHitTypeError();
-//        }
-//
-//        // TEST 6: Aggregate
-//        Map<String, Object> data6 = new HashMap<>();
-//        data6.put("scope", "pageview");
-//        data6.put("name", "scrolldepth");
-//        data6.put("aggregate", OSB.AggregateType.MAX);
-//        data6.put("value", 0.8);
-//
-//        // Without helper
-//        try {
-//            osb.send(OSB.HitType.AGGREGATE, data6);
-//        } catch (IllegalArgumentException ex) {
-//            showHitTypeError();
-//        }
-//        // With helper
-//        try {
-//            osb.sendAggregate("pageview", "scrolldepth", OSB.AggregateType.MAX, 0.8);
-//        } catch (IllegalArgumentException ex) {
-//            showHitTypeError();
-//        }
+//        handler.postDelayed(new Runnable() {
+//            public void run() {
+//                mOsb.send(OSB.HitType.ACTION, "purchase", data4);
+//            }
+//        }, 3000);
+
     }
 
 
     /* Private Functions */
     private void initializeFields() {
-//        mEditType = findViewById(R.id.editType);
-//        mEditAction = findViewById(R.id.editAction);
-//        mEditAccountId = findViewById(R.id.editAccountId);
-//        mEditServerUrl = findViewById(R.id.editServerUrl);
-//        mSwitchLocation = findViewById(R.id.switchLocation);
+        mEditType = findViewById(R.id.editType);
+        mEditAction = findViewById(R.id.editAction);
+        mEditAccountId = findViewById(R.id.editAccountId);
+        mEditServerUrl = findViewById(R.id.editServerUrl);
+        mSwitchLocation = findViewById(R.id.switchLocation);
     }
 
     private void showActionError() {

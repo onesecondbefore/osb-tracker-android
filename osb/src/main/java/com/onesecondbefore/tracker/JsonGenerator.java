@@ -18,8 +18,6 @@ import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.google.android.gms.ads.identifier.AdvertisingIdClient;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,7 +41,7 @@ final class JsonGenerator {
     }
 
     public JSONObject generate(Config config, Event event, String eventKey,
-                               Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent, String viewId, ArrayList<Map<String, Object>> ids, Map<String, Object> setDataObject) {
+                               Map<String, Object> eventData, Map<String, Object> hitsData, String[] consent, String viewId, ArrayList<Map<String, Object>> ids, Map<String, Object> setDataObject, String idfa, String idfv, String cduid) {
 
         mSetDataObject = setDataObject;
 
@@ -55,7 +53,7 @@ final class JsonGenerator {
         JSONObject eventJson = new JSONObject();
         try {
             eventJson.put("sy", getSystemInfo(config, event));
-            eventJson.put("dv", getDeviceInfo(event));
+            eventJson.put("dv", getDeviceInfo(event, idfa, idfv, cduid));
             eventJson.accumulate("hits", hits);
             eventJson.put("pg", getPageInfo(viewId));
             eventJson.put("consent", new JSONArray(Arrays.asList(consent)));
@@ -95,7 +93,7 @@ final class JsonGenerator {
         JSONObject dataObj = new JSONObject();
 
         try {
-            // Always add page data ^MB
+            // Always add page, action & item data ^MB
             List<Map<String, Object>> pageData = getSetDataForType(OSB.SetType.PAGE);
             if (pageData != null) {
                 for (Map<String, Object> page : pageData) {
@@ -105,6 +103,30 @@ final class JsonGenerator {
                         } // If it's a special key we will have added it to the page (pg) object ^MB
                     }
                 }
+            }
+
+            List<Map<String, Object>> actionData = getSetDataForType(OSB.SetType.ACTION);
+            JSONObject actionJsonObj = new JSONObject();
+            if (actionData != null) {
+                for (Map<String, Object> actionObj : actionData) {
+                    if (actionObj != null) {
+                        for (Map.Entry<String, Object> entry : actionObj.entrySet()) {
+                            if (isSpecialKey(entry.getKey(), OSB.HitType.ACTION)) {
+                                actionJsonObj.put(entry.getKey(), entry.getValue());
+                            } else {
+                                dataObj.put(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    }
+                }
+            }
+            if (actionJsonObj.length() > 0) {
+                hitObj.put("action", actionJsonObj);
+            }
+
+            List<Map<String, Object>> itemData = getSetDataForType(OSB.SetType.ITEM);
+            if (itemData != null) {
+                hitObj.put("items", new JSONArray(itemData));
             }
 
             switch (event.getType()) {
@@ -120,25 +142,6 @@ final class JsonGenerator {
                                 }
                             }
                         }
-                    }
-                    break;
-                case ACTION:
-                    List<Map<String, Object>> actionData = getSetDataForType(OSB.SetType.ACTION);
-                    if (actionData != null) {
-                        for (Map<String, Object> actionObj : actionData) {
-                            for (Map.Entry<String, Object> entry : actionObj.entrySet()) {
-                                if (isSpecialKey(entry.getKey(), OSB.HitType.ACTION)) {
-                                    hitObj.put(entry.getKey(), entry.getValue());
-                                } else {
-                                    dataObj.put(entry.getKey(), entry.getValue());
-                                }
-                            }
-                        }
-                    }
-
-                    List<Map<String, Object>> itemData = getSetDataForType(OSB.SetType.ITEM);
-                    if (itemData != null) {
-                        hitObj.put("items", new JSONArray(itemData));
                     }
                     break;
                 default:
@@ -190,7 +193,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "6.9." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "7.1." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
@@ -203,7 +206,7 @@ final class JsonGenerator {
         return json;
     }
 
-    private JSONObject getDeviceInfo(Event event) {
+    private JSONObject getDeviceInfo(Event event, String idfa, String idfv, String cduid) {
         JSONObject json = new JSONObject();
         try {
             Point size = this.getWindowSize();
@@ -212,8 +215,9 @@ final class JsonGenerator {
             json.put("sh", size.y);
             json.put("tz", this.getTimeZoneOffset());
             json.put("lang", this.getLanguage());
-            json.put("idfa", this.getAdvertisingClientId());
-            json.put("idfv", this.getUniqueId());
+            json.put("idfa", idfa);
+            json.put("idfv", idfv);
+            json.put("cduid", cduid);
             json.put("conn", this.getNetworkType());
             json.put("mem", this.getDiskFreeMem());
 
@@ -271,10 +275,6 @@ final class JsonGenerator {
         return locale.getLanguage() + "-" + locale.getCountry();
     }
 
-    @SuppressLint("HardwareIds")
-    private String getUniqueId() {
-        return Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
-    }
 
     private String getNetworkType() {
         String type = "offline";
@@ -295,20 +295,6 @@ final class JsonGenerator {
         return type;
     }
 
-    private String getAdvertisingClientId() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            return null;
-        }
-
-        try {
-            AdvertisingIdClient.Info adInfo = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
-            return adInfo != null ? adInfo.getId() : null;
-        } catch (Exception e) {
-            Log.e(TAG, "getAdvertisingClientId - " + e.getMessage());
-        }
-
-        return null;
-    }
 
     private long getDiskFreeMem() {
         long freeMem = 0;
@@ -340,7 +326,7 @@ final class JsonGenerator {
             case PAGEVIEW:
                 return key.equals("title") || key.equals("id") || key.equals("url") || key.equals("ref") || key.equals("osc_id") || key.equals("osc_label") || key.equals("oss_keyword") || key.equals("oss_category") || key.equals("oss_total_results") || key.equals("oss_results_per_page") || key.equals("oss_current_page");
             case ACTION:
-                return key.equals("tax") || key.equals("id") || key.equals("discount") || key.equals("currencyCode") || key.equals("revenue") || key.equals("currency_code");
+                return key.equals("tax") || key.equals("id") || key.equals("discount") || key.equals("currencyCode") || key.equals("revenue") || key.equals("currency_code") || key.equals("shipping");
             default:
                 return false;
         }
