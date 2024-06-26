@@ -11,6 +11,7 @@ import android.widget.Switch;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.onesecondbefore.tracker.OSB;
 
 import java.util.ArrayList;
@@ -30,12 +31,16 @@ public class MainActivity extends AppCompatActivity {
 
     private OSB mOsb;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
         initializeFields();
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
     }
 
     public void sendEvent(View view) {
@@ -77,7 +82,15 @@ public class MainActivity extends AppCompatActivity {
 
         mOsb = OSB.getInstance();
         mOsb.config(this, accountId, serverUrl, siteId);
+
+        mOsb.addGoogleConsentCallback(consent -> {
+            Map<FirebaseAnalytics.ConsentType, FirebaseAnalytics.ConsentStatus> consentMap = new HashMap<>();
+            consent.forEach((t,s) -> consentMap.put(FirebaseAnalytics.ConsentType.valueOf(t), FirebaseAnalytics.ConsentStatus.valueOf(s)));
+            mFirebaseAnalytics.setConsent(consentMap);
+        });
     }
+
+    
 
     public void sendEventBackground(View view) {
 

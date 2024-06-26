@@ -26,6 +26,7 @@ import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.nio.charset.Charset;
@@ -63,6 +64,13 @@ public final class OSB implements DefaultLifecycleObserver {
     private ArrayList<Map<String, Object>> mIds = new ArrayList<>();
     private WebView mWebView;
     private AlertDialog mConsentDialog;
+
+
+
+    private OnGoogleConsentModeCallback onGoogleConsentModeCallback;
+    public interface OnGoogleConsentModeCallback {
+        public void onGoogleConsentMode(Map<String, String> consent);
+    }
 
     private static final String SPIdentifier = "osb-shared-preferences";
     private static final String SPConsentKey = "osb-consent";
@@ -186,8 +194,10 @@ public final class OSB implements DefaultLifecycleObserver {
 
         mIsInitialized = true;
         Log.i(TAG, "OSB - Initialized");
+    }
 
-
+    public void addGoogleConsentCallback(OnGoogleConsentModeCallback callBack) {
+        this.onGoogleConsentModeCallback = callBack;
     }
 
     public void debug(boolean isEnabled) {
@@ -511,6 +521,19 @@ public final class OSB implements DefaultLifecycleObserver {
                 setConsentExpiration(expirationDate);
                 String cduid = json.getString("cduid");
                 setCDUID(cduid);
+
+
+                if (this.onGoogleConsentModeCallback != null) {
+                    JSONArray purposes = consent.getJSONArray("purposes");
+
+                    ArrayList<Integer> purposesList = new ArrayList<>();
+                    for (int i = 0; i < purposes.length(); i++) {
+                        purposesList.add(purposes.getInt(i));
+                    }
+
+                    Map<String, String> consentMode = mapConsentMode(purposesList);
+                    onGoogleConsentModeCallback.onGoogleConsentMode(consentMode);
+                }
 
                 decodeAndStoreIABConsent(consentString);
                 setLocalCmpVersion(getRemoteCmpVersion());
@@ -861,9 +884,40 @@ public final class OSB implements DefaultLifecycleObserver {
         }
     }
 
+    private Map<String, String> mapConsentMode(List<Integer> purposes) {
+        Map<String, String> consent = new HashMap<>() {
+            {
+                put("AD_STORAGE", "DENIED");
+                put("AD_USER_DATA", "DENIED");
+                put("AD_PERSONALIZATION", "DENIED");
+                put("ANALYTICS_STORAGE", "GRANTED");
+//                put("FUNCTIONALITY_STORAGE", "GRANTED");
+//                put("PERSONALIZATION_STORAGE", "GRANTED");
+//                put("SECURITY_STORAGE", "GRANTED");
+            }};
+
+        if (purposes.contains(1)) {
+            consent.put("AD_STORAGE", "GRANTED");
+        }
+
+        if (purposes.contains(1) && purposes.contains(7)) {
+            consent.put("AD_USER_DATA", "GRANTED");
+        }
+
+        if (purposes.contains(3) && purposes.contains(4)) {
+            consent.put("AD_PERSONALIZATION", "GRANTED");
+        }
+
+        return consent;
+    }
+
     @SuppressWarnings("unused")
     @JavascriptInterface
     public void postMessage(String consentCallbackString) {
         processConsentCallback(consentCallbackString);
     }
+}
+
+interface OnLoginCompleteListener {
+    void onLoginComplete(String response);
 }
