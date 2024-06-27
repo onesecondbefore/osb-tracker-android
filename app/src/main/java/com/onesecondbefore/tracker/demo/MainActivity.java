@@ -3,7 +3,6 @@ package com.onesecondbefore.tracker.demo;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -41,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
         initializeFields();
 
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
+        this.getGoogleConsentPayload();
     }
 
     public void sendEvent(View view) {
@@ -59,12 +60,12 @@ public class MainActivity extends AppCompatActivity {
 
     public void showConsentWebview(Boolean forceShow) {
         if (mOsb == null) {
-            inializeOSB();
+            initializeOSB();
         }
         mOsb.showConsentWebview(this, forceShow);
     }
 
-    public void inializeOSB() {
+    public void initializeOSB() {
         String accountId = mEditAccountId.getText().toString();
         if (accountId.isEmpty()) {
             accountId = "demo";
@@ -90,11 +91,20 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    
+    public void getGoogleConsentPayload() {
+        if (mOsb == null){
+            initializeOSB();
+        }
+
+        Map<FirebaseAnalytics.ConsentType, FirebaseAnalytics.ConsentStatus> consentMap = new HashMap<>();
+        mOsb.getGoogleConsentPayload().forEach((t,s) -> consentMap.put(FirebaseAnalytics.ConsentType.valueOf(t), FirebaseAnalytics.ConsentStatus.valueOf(s)));
+
+        Log.i(TAG, consentMap.toString());
+    }
 
     public void sendEventBackground(View view) {
 
-        inializeOSB();
+        initializeOSB();
 
         Handler handler = new Handler();
 

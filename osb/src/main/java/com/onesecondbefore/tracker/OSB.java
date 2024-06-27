@@ -27,6 +27,7 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.Charset;
@@ -35,6 +36,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -79,6 +81,8 @@ public final class OSB implements DefaultLifecycleObserver {
     private static final String SPRemoteCmpKey = "osb-remote-cmp";
     private static final String SPLocalCmpKey = "osb-local-cmp";
     private static final String SPCmpCheckTimestamp = "osb-cmp-check-timestamp";
+    private static final String SPGoogleConsentKey = "osb-cmp-google-consent";
+
 
 
     public enum HitType {
@@ -457,13 +461,18 @@ public final class OSB implements DefaultLifecycleObserver {
         }
     }
 
-    public boolean shouldResurfaceCmp(){
-        if (getRemoteCmpVersion() > getLocalCmpVersion()){
+    public boolean shouldResurfaceCmp() {
+        if (getRemoteCmpVersion() > getLocalCmpVersion()) {
             setLocalCmpVersion(getRemoteCmpVersion());
             return true;
         }
 
         return false;
+    }
+
+    public Map<String, String> getGoogleConsentPayload() {
+
+        return getGoogleConsentMode();
     }
 
     /* Deprecated Functions */
@@ -523,15 +532,17 @@ public final class OSB implements DefaultLifecycleObserver {
                 setCDUID(cduid);
 
 
+                JSONArray purposes = consent.getJSONArray("purposes");
+
+                ArrayList<Integer> purposesList = new ArrayList<>();
+                for (int i = 0; i < purposes.length(); i++) {
+                    purposesList.add(purposes.getInt(i));
+                }
+
+                Map<String, String> consentMode = mapConsentMode(purposesList);
+                setGoogleConsentMode(consentMode);
+
                 if (this.onGoogleConsentModeCallback != null) {
-                    JSONArray purposes = consent.getJSONArray("purposes");
-
-                    ArrayList<Integer> purposesList = new ArrayList<>();
-                    for (int i = 0; i < purposes.length(); i++) {
-                        purposesList.add(purposes.getInt(i));
-                    }
-
-                    Map<String, String> consentMode = mapConsentMode(purposesList);
                     onGoogleConsentModeCallback.onGoogleConsentMode(consentMode);
                 }
 
@@ -588,6 +599,37 @@ public final class OSB implements DefaultLifecycleObserver {
     private String getCDUID() {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
         return preferences.getString(SPCDUIDKey, null);
+    }
+
+    private void setGoogleConsentMode(Map<String,String> consent) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        if (preferences != null){
+            JSONObject jsonObject = new JSONObject(consent);
+            String jsonString = jsonObject.toString();
+            preferences.edit()
+                    .remove(SPGoogleConsentKey)
+                    .putString(SPGoogleConsentKey, jsonString)
+                    .apply();
+        }
+    }
+
+    private Map<String,String> getGoogleConsentMode() {
+        Map<String,String> outputMap = new HashMap<>();
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        try {
+            if (preferences != null) {
+                String jsonString = preferences.getString(SPGoogleConsentKey, (new JSONObject()).toString());
+                JSONObject jsonObject = new JSONObject(jsonString);
+                Iterator<String> keysItr = jsonObject.keys();
+                while (keysItr.hasNext()) {
+                    String type = keysItr.next();
+                    outputMap.put(type, jsonObject.getString(type));
+                }
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        return outputMap;
     }
 
     private void setRemoteCmpVersion(int cmpVersion) {
