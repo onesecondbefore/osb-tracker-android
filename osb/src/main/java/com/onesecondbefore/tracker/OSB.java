@@ -58,6 +58,7 @@ public final class OSB implements DefaultLifecycleObserver {
     private ApiQueue mQueue = null;
     private Context mContext;
     private boolean mIsInitialized = false;
+    private boolean hasLocationConsent = false;
     private String mViewId = calculateViewId();
     private String mEventKey = null;
     private Map<String, Object> mEventData = null;
@@ -533,7 +534,6 @@ public final class OSB implements DefaultLifecycleObserver {
 
 
                 JSONArray purposes = consent.getJSONArray("purposes");
-
                 ArrayList<Integer> purposesList = new ArrayList<>();
                 for (int i = 0; i < purposes.length(); i++) {
                     purposesList.add(purposes.getInt(i));
@@ -548,6 +548,13 @@ public final class OSB implements DefaultLifecycleObserver {
 
                 decodeAndStoreIABConsent(consentString);
                 setLocalCmpVersion(getRemoteCmpVersion());
+
+                JSONArray specialFeatures = consent.getJSONArray("specialFeatures");
+                ArrayList<Integer> specialFeaturesList = new ArrayList<>();
+                for (int i = 0; i < specialFeatures.length(); i++) {
+                    specialFeaturesList.add(specialFeatures.getInt(i));
+                }
+                processSpecialFeatures(specialFeaturesList);
             }
         } catch (Throwable t) {
             Log.e(TAG, "OSB Error: Could not parse consent JSON.");
@@ -599,6 +606,10 @@ public final class OSB implements DefaultLifecycleObserver {
     private String getCDUID() {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
         return preferences.getString(SPCDUIDKey, null);
+    }
+
+    private void processSpecialFeatures(ArrayList<Integer> specialFeatures) {
+        this.hasLocationConsent = specialFeatures.contains(1);
     }
 
     private void setGoogleConsentMode(Map<String,String> consent) {
@@ -754,7 +765,7 @@ public final class OSB implements DefaultLifecycleObserver {
             this.startGpsTracker();
 
             final Event event = new Event(type, actionType, data,
-                    mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
+                    hasLocationConsent && mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
 
             String viewId = getViewId(event);
             Map<String, Object> setData = new HashMap<String, Object>(mSetDataObject);
