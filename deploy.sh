@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export JAVA_HOME=$(/usr/libexec/java_home 17)
+export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
 
 VERSION=7.4
 (cd osb; ../gradlew clean build)
