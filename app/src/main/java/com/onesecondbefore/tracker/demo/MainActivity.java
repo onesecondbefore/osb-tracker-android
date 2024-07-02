@@ -68,15 +68,15 @@ public class MainActivity extends AppCompatActivity {
     public void initializeOSB() {
         String accountId = mEditAccountId.getText().toString();
         if (accountId.isEmpty()) {
-            accountId = "demo";
+            accountId = "demo"; // INSERT YOUR ACCOUNT ID HERE
         }
 
         String serverUrl = mEditServerUrl.getText().toString();
         if (serverUrl.isEmpty()) {
-            serverUrl = "https://c.onesecondbefore.com";
+            serverUrl = "https://tracker.yourcompany.com"; // INSERT YOUR SERVER URL HERE
         }
 
-        String siteId = "demo.app";
+        String siteId = "demo.app"; // INSERT YOUR SITE ID HERE
         Log.i(TAG, "AccountId = " + accountId);
         Log.i(TAG, "ServerUrl = " + serverUrl);
         Log.i(TAG, "siteId = " + siteId);

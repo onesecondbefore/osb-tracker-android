@@ -221,7 +221,7 @@ public final class OSB implements DefaultLifecycleObserver {
 
             AlertDialog.Builder builder = new AlertDialog.Builder(activity);
             mConsentDialog = builder.setView(view.findViewById(R.id.osbwebviewlayout)).show();
-
+            mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
             mWebView.loadUrl(getConsentWebviewURL());
         }
     }
