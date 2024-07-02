@@ -193,7 +193,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "7.1." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "7.4." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
@@ -222,10 +222,8 @@ final class JsonGenerator {
             json.put("mem", this.getDiskFreeMem());
 
             if (hasValidGeoLocation(event)) {
-                JSONObject geoJson = new JSONObject();
-                geoJson.put("latitude", event.getLatitude());
-                geoJson.put("longitude", event.getLongitude());
-                json.put("geo", geoJson);
+                json.put("latitude", event.getLatitude());
+                json.put("longitude", event.getLongitude());
             }
         } catch (JSONException e) {
             Log.e(TAG, "getDeviceInfo - " + e.getMessage());

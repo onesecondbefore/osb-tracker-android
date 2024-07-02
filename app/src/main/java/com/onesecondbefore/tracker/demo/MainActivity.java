@@ -8,7 +8,6 @@ package com.onesecondbefore.tracker.demo;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -16,6 +15,7 @@ import android.widget.Switch;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.onesecondbefore.tracker.OSB;
 
 import java.util.ArrayList;
@@ -35,12 +35,18 @@ public class MainActivity extends AppCompatActivity {
 
     private OSB mOsb;
 
+    private FirebaseAnalytics mFirebaseAnalytics;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
         initializeFields();
+
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
+        this.getGoogleConsentPayload();
     }
 
     public void sendEvent(View view) {
@@ -59,34 +65,51 @@ public class MainActivity extends AppCompatActivity {
 
     public void showConsentWebview(Boolean forceShow) {
         if (mOsb == null) {
-            inializeOSB();
+            initializeOSB();
         }
         mOsb.showConsentWebview(this, forceShow);
     }
 
-    public void inializeOSB() {
+    public void initializeOSB() {
         String accountId = mEditAccountId.getText().toString();
         if (accountId.isEmpty()) {
-            accountId = "demo";
+            accountId = "demo"; // INSERT YOUR ACCOUNT ID HERE
         }
 
         String serverUrl = mEditServerUrl.getText().toString();
         if (serverUrl.isEmpty()) {
-            serverUrl = "https://c.onesecondbefore.com";
+            serverUrl = "https://tracker.yourcompany.com"; // INSERT YOUR SERVER URL HERE
         }
 
-        String siteId = "demo.app";
+        String siteId = "demo.app"; // INSERT YOUR SITE ID HERE
         Log.i(TAG, "AccountId = " + accountId);
         Log.i(TAG, "ServerUrl = " + serverUrl);
         Log.i(TAG, "siteId = " + siteId);
 
         mOsb = OSB.getInstance();
         mOsb.config(this, accountId, serverUrl, siteId);
+
+        mOsb.addGoogleConsentCallback(consent -> {
+            Map<FirebaseAnalytics.ConsentType, FirebaseAnalytics.ConsentStatus> consentMap = new HashMap<>();
+            consent.forEach((t,s) -> consentMap.put(FirebaseAnalytics.ConsentType.valueOf(t), FirebaseAnalytics.ConsentStatus.valueOf(s)));
+            mFirebaseAnalytics.setConsent(consentMap);
+        });
+    }
+
+    public void getGoogleConsentPayload() {
+        if (mOsb == null){
+            initializeOSB();
+        }
+
+        Map<FirebaseAnalytics.ConsentType, FirebaseAnalytics.ConsentStatus> consentMap = new HashMap<>();
+        mOsb.getGoogleConsentPayload().forEach((t,s) -> consentMap.put(FirebaseAnalytics.ConsentType.valueOf(t), FirebaseAnalytics.ConsentStatus.valueOf(s)));
+
+        Log.i(TAG, consentMap.toString());
     }
 
     public void sendEventBackground(View view) {
 
-        inializeOSB();
+        initializeOSB();
 
         Handler handler = new Handler();
 

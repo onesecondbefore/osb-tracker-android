@@ -31,6 +31,8 @@ import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.Charset;
@@ -39,6 +41,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -60,6 +63,7 @@ public final class OSB implements DefaultLifecycleObserver {
     private ApiQueue mQueue = null;
     private Context mContext;
     private boolean mIsInitialized = false;
+    private boolean hasLocationConsent = false;
     private String mViewId = calculateViewId();
     private String mEventKey = null;
     private Map<String, Object> mEventData = null;
@@ -69,6 +73,13 @@ public final class OSB implements DefaultLifecycleObserver {
     private WebView mWebView;
     private AlertDialog mConsentDialog;
 
+
+
+    private OnGoogleConsentModeCallback onGoogleConsentModeCallback;
+    public interface OnGoogleConsentModeCallback {
+        public void onGoogleConsentMode(Map<String, String> consent);
+    }
+
     private static final String SPIdentifier = "osb-shared-preferences";
     private static final String SPConsentKey = "osb-consent";
     private static final String SPConsentExpirationKey = "osb-consent-expiration";
@@ -76,6 +87,8 @@ public final class OSB implements DefaultLifecycleObserver {
     private static final String SPRemoteCmpKey = "osb-remote-cmp";
     private static final String SPLocalCmpKey = "osb-local-cmp";
     private static final String SPCmpCheckTimestamp = "osb-cmp-check-timestamp";
+    private static final String SPGoogleConsentKey = "osb-cmp-google-consent";
+
 
 
     public enum HitType {
@@ -191,8 +204,10 @@ public final class OSB implements DefaultLifecycleObserver {
 
         mIsInitialized = true;
         Log.i(TAG, "OSB - Initialized");
+    }
 
-
+    public void addGoogleConsentCallback(OnGoogleConsentModeCallback callBack) {
+        this.onGoogleConsentModeCallback = callBack;
     }
 
     public void debug(boolean isEnabled) {
@@ -211,7 +226,7 @@ public final class OSB implements DefaultLifecycleObserver {
 
             AlertDialog.Builder builder = new AlertDialog.Builder(activity);
             mConsentDialog = builder.setView(view.findViewById(R.id.osbwebviewlayout)).show();
-
+            mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
             mWebView.loadUrl(getConsentWebviewURL());
         }
     }
@@ -452,13 +467,18 @@ public final class OSB implements DefaultLifecycleObserver {
         }
     }
 
-    public boolean shouldResurfaceCmp(){
-        if (getRemoteCmpVersion() > getLocalCmpVersion()){
+    public boolean shouldResurfaceCmp() {
+        if (getRemoteCmpVersion() > getLocalCmpVersion()) {
             setLocalCmpVersion(getRemoteCmpVersion());
             return true;
         }
 
         return false;
+    }
+
+    public Map<String, String> getGoogleConsentPayload() {
+
+        return getGoogleConsentMode();
     }
 
     /* Deprecated Functions */
@@ -517,8 +537,29 @@ public final class OSB implements DefaultLifecycleObserver {
                 String cduid = json.getString("cduid");
                 setCDUID(cduid);
 
+
+                JSONArray purposes = consent.getJSONArray("purposes");
+                ArrayList<Integer> purposesList = new ArrayList<>();
+                for (int i = 0; i < purposes.length(); i++) {
+                    purposesList.add(purposes.getInt(i));
+                }
+
+                Map<String, String> consentMode = mapConsentMode(purposesList);
+                setGoogleConsentMode(consentMode);
+
+                if (this.onGoogleConsentModeCallback != null) {
+                    onGoogleConsentModeCallback.onGoogleConsentMode(consentMode);
+                }
+
                 decodeAndStoreIABConsent(consentString);
                 setLocalCmpVersion(getRemoteCmpVersion());
+
+                JSONArray specialFeatures = consent.getJSONArray("specialFeatures");
+                ArrayList<Integer> specialFeaturesList = new ArrayList<>();
+                for (int i = 0; i < specialFeatures.length(); i++) {
+                    specialFeaturesList.add(specialFeatures.getInt(i));
+                }
+                processSpecialFeatures(specialFeaturesList);
             }
         } catch (Throwable t) {
             Log.e(TAG, "OSB Error: Could not parse consent JSON.");
@@ -570,6 +611,41 @@ public final class OSB implements DefaultLifecycleObserver {
     private String getCDUID() {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
         return preferences.getString(SPCDUIDKey, null);
+    }
+
+    private void processSpecialFeatures(ArrayList<Integer> specialFeatures) {
+        this.hasLocationConsent = specialFeatures.contains(1);
+    }
+
+    private void setGoogleConsentMode(Map<String,String> consent) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        if (preferences != null){
+            JSONObject jsonObject = new JSONObject(consent);
+            String jsonString = jsonObject.toString();
+            preferences.edit()
+                    .remove(SPGoogleConsentKey)
+                    .putString(SPGoogleConsentKey, jsonString)
+                    .apply();
+        }
+    }
+
+    private Map<String,String> getGoogleConsentMode() {
+        Map<String,String> outputMap = new HashMap<>();
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        try {
+            if (preferences != null) {
+                String jsonString = preferences.getString(SPGoogleConsentKey, (new JSONObject()).toString());
+                JSONObject jsonObject = new JSONObject(jsonString);
+                Iterator<String> keysItr = jsonObject.keys();
+                while (keysItr.hasNext()) {
+                    String type = keysItr.next();
+                    outputMap.put(type, jsonObject.getString(type));
+                }
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        return outputMap;
     }
 
     private void setRemoteCmpVersion(int cmpVersion) {
@@ -694,7 +770,7 @@ public final class OSB implements DefaultLifecycleObserver {
             this.startGpsTracker();
 
             final Event event = new Event(type, actionType, data,
-                    mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
+                    hasLocationConsent && mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
 
             String viewId = getViewId(event);
             Map<String, Object> setData = new HashMap<String, Object>(mSetDataObject);
@@ -866,9 +942,40 @@ public final class OSB implements DefaultLifecycleObserver {
         }
     }
 
+    private Map<String, String> mapConsentMode(List<Integer> purposes) {
+        Map<String, String> consent = new HashMap<>() {
+            {
+                put("AD_STORAGE", "DENIED");
+                put("AD_USER_DATA", "DENIED");
+                put("AD_PERSONALIZATION", "DENIED");
+                put("ANALYTICS_STORAGE", "GRANTED");
+//                put("FUNCTIONALITY_STORAGE", "GRANTED");
+//                put("PERSONALIZATION_STORAGE", "GRANTED");
+//                put("SECURITY_STORAGE", "GRANTED");
+            }};
+
+        if (purposes.contains(1)) {
+            consent.put("AD_STORAGE", "GRANTED");
+        }
+
+        if (purposes.contains(1) && purposes.contains(7)) {
+            consent.put("AD_USER_DATA", "GRANTED");
+        }
+
+        if (purposes.contains(3) && purposes.contains(4)) {
+            consent.put("AD_PERSONALIZATION", "GRANTED");
+        }
+
+        return consent;
+    }
+
     @SuppressWarnings("unused")
     @JavascriptInterface
     public void postMessage(String consentCallbackString) {
         processConsentCallback(consentCallbackString);
     }
+}
+
+interface OnLoginCompleteListener {
+    void onLoginComplete(String response);
 }

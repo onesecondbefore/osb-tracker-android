@@ -108,7 +108,7 @@
             />
         <EditText
             android:id="@+id/editServerUrl"
-            android:hint="E.g. https://c.onesecondbefore.com"
+            android:hint="E.g. https://tracker.yourcompany.com"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             android:textSize="20sp"
