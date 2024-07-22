@@ -148,7 +148,8 @@ public final class OSB implements DefaultLifecycleObserver {
 
     @Override
     public void onResume(@NonNull LifecycleOwner owner) {
-        Log.d(TAG, "App in foreground");
+        log("App in foreground");
+
         startGpsTracker();
 
         if (mQueue != null) {
@@ -160,7 +161,7 @@ public final class OSB implements DefaultLifecycleObserver {
 
     @Override
     public void onPause(@NonNull LifecycleOwner owner) {
-        Log.d(TAG, "App in background");
+        log("App in background");
         if (mGpsTracker != null) {
             mGpsTracker.stopTracker();
         }
@@ -198,7 +199,7 @@ public final class OSB implements DefaultLifecycleObserver {
         startGpsTracker();
 
         mIsInitialized = true;
-        Log.i(TAG, "OSB - Initialized");
+        log("OSB - Initialized");
     }
 
     public void addGoogleConsentCallback(OnGoogleConsentModeCallback callBack) {
@@ -256,6 +257,30 @@ public final class OSB implements DefaultLifecycleObserver {
     }
 
     public void setConsent(String data) {
+        setConsent(data, true);
+    }
+
+    public void setConsent(String data, Boolean useConsentCallback) {
+        try {
+            decodeAndStoreIABConsent(data);
+        } catch (Exception e) {
+            Log.w(TAG, "OSB Warning: Couldn't decode IAB consent.");
+        }
+
+        if (useConsentCallback) {
+            try {
+                Map<String, String> consentMode = mapConsentMode(convertIABToPurposes(data));
+                setGoogleConsentMode(consentMode);
+
+                if (this.onGoogleConsentModeCallback != null) {
+                    onGoogleConsentModeCallback.onGoogleConsentMode(consentMode);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "OSB Warning: Couldn't convert consent string to valid IAB object.");
+            }
+
+        }
+
         setConsent(new String[]{data});
     }
 
@@ -546,7 +571,12 @@ public final class OSB implements DefaultLifecycleObserver {
                     onGoogleConsentModeCallback.onGoogleConsentMode(consentMode);
                 }
 
-                decodeAndStoreIABConsent(consentString);
+                try {
+                    decodeAndStoreIABConsent(consentString);
+                } catch (Exception e) {
+                    Log.e(TAG, "OSB Error: Couldn't decode IAB consent.");
+                }
+
                 setLocalCmpVersion(getRemoteCmpVersion());
 
                 JSONArray specialFeatures = consent.getJSONArray("specialFeatures");
@@ -772,7 +802,7 @@ public final class OSB implements DefaultLifecycleObserver {
 
             Thread t = new Thread(new Runnable() {
                 public void run() {
-                    JsonGenerator generator = new JsonGenerator(mContext);
+                    JsonGenerator generator = new JsonGenerator(mContext, mConfig);
                     JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData,
                             mHitsData, getConsent(), viewId, mIds, setData, getAdvertisingClientId(), getUniqueId(), getCDUID());
                     mQueue.addToQueue(mConfig.getServerUrl(), jsonData);
@@ -944,9 +974,6 @@ public final class OSB implements DefaultLifecycleObserver {
                 put("AD_USER_DATA", "DENIED");
                 put("AD_PERSONALIZATION", "DENIED");
                 put("ANALYTICS_STORAGE", "GRANTED");
-//                put("FUNCTIONALITY_STORAGE", "GRANTED");
-//                put("PERSONALIZATION_STORAGE", "GRANTED");
-//                put("SECURITY_STORAGE", "GRANTED");
             }};
 
         if (purposes.contains(1)) {
@@ -962,6 +989,22 @@ public final class OSB implements DefaultLifecycleObserver {
         }
 
         return consent;
+    }
+
+    private List<Integer> convertIABToPurposes(String consentString) {
+        List<Integer> list = new ArrayList<>();
+        TCString tcString = TCString.decode(consentString);
+        Iterable<Integer> iterable =  tcString.getPurposesConsent();
+        for (Integer item : iterable) {
+            list.add(item);
+        }
+        return list;
+    }
+
+    private void log(String message) {
+        if (mConfig.isDebugEnabled()){
+            Log.i(TAG, message);
+        }
     }
 
     @SuppressWarnings("unused")
