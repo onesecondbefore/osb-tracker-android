@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText mEditType;
     private EditText mEditAction;
     private EditText mEditAccountId;
-    private EditText mEditServerUrl;
+    private EditText mEditTrackerUrl;
     private Switch mSwitchLocation;
 
     private OSB mOsb;
@@ -71,18 +71,19 @@ public class MainActivity extends AppCompatActivity {
             accountId = "demo"; // INSERT YOUR ACCOUNT ID HERE
         }
 
-        String serverUrl = mEditServerUrl.getText().toString();
-        if (serverUrl.isEmpty()) {
-            serverUrl = "https://tracker.yourcompany.com"; // INSERT YOUR SERVER URL HERE
+        String trackerUrl = mEditTrackerUrl.getText().toString();
+        if (trackerUrl.isEmpty()) {
+            trackerUrl = "https://tracker.yourcompany.com"; // INSERT YOUR TRACKER URL HERE
         }
 
         String siteId = "demo.app"; // INSERT YOUR SITE ID HERE
         Log.i(TAG, "AccountId = " + accountId);
-        Log.i(TAG, "ServerUrl = " + serverUrl);
+        Log.i(TAG, "TrackerUrl = " + trackerUrl);
         Log.i(TAG, "siteId = " + siteId);
 
         mOsb = OSB.getInstance();
-        mOsb.config(this, accountId, serverUrl, siteId);
+        mOsb.debug(true);
+        mOsb.config(this, accountId, trackerUrl, siteId);
 
         mOsb.addGoogleConsentCallback(consent -> {
             Map<FirebaseAnalytics.ConsentType, FirebaseAnalytics.ConsentStatus> consentMap = new HashMap<>();
@@ -103,12 +104,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendEventBackground(View view) {
-
         initializeOSB();
 
         Handler handler = new Handler();
-
-//        mOsb.setConsent(new String[]{"marketing", "social", "functional", "advertising"});
+        mOsb.setConsent(new String[]{"marketing", "social", "functional", "advertising"});
 
         Log.i(TAG, "consent: " + Arrays.toString(mOsb.getConsent()));
 //
@@ -310,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
         mEditType = findViewById(R.id.editType);
         mEditAction = findViewById(R.id.editAction);
         mEditAccountId = findViewById(R.id.editAccountId);
-        mEditServerUrl = findViewById(R.id.editServerUrl);
+        mEditTrackerUrl = findViewById(R.id.editTrackerUrl);
         mSwitchLocation = findViewById(R.id.switchLocation);
     }
 
