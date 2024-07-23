@@ -90,7 +90,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/editServerUrlView"
+        android:id="@+id/editTrackerUrlView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -103,11 +103,11 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="30dp"
-            android:text="Enter the server url:"
+            android:text="Enter the tracker url:"
             android:textSize="20sp"
             />
         <EditText
-            android:id="@+id/editServerUrl"
+            android:id="@+id/editTrackerUrl"
             android:hint="E.g. https://tracker.yourcompany.com"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
@@ -126,7 +126,7 @@
         android:layout_marginRight="16dp"
         android:paddingTop="6dp"
         android:layout_centerInParent="true"
-        android:layout_below="@+id/editServerUrlView"
+        android:layout_below="@+id/editTrackerUrlView"
         >
         <TextView
             android:layout_width="wrap_content"
