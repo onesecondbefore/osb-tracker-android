@@ -58,7 +58,7 @@ import com.iabtcf.exceptions.TCStringDecodeException;
 public final class OSB implements DefaultLifecycleObserver {
     private static final String TAG = "OSB:Api";
     private static OSB mInstance = null;
-    private Config mConfig = new Config();
+    private final Config mConfig = new Config();
     private GpsTracker mGpsTracker = null;
     private ApiQueue mQueue = null;
     private Context mContext;
@@ -178,10 +178,9 @@ public final class OSB implements DefaultLifecycleObserver {
 
     public void config(Context context, String accountId, String url, String siteId) {
         clear();
-        if (android.os.Build.VERSION.SDK_INT > 9) {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-        }
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
 
         // Get a handler that can be used to post to the main thread
         Handler mainHandler = new Handler(context.getMainLooper());
@@ -215,6 +214,7 @@ public final class OSB implements DefaultLifecycleObserver {
         mConfig.setDebug(isEnabled);
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     public void showConsentWebview(Activity activity, Boolean forceShow) {
         if (forceShow || shouldShowConsentWebview()){
             View view = LayoutInflater.from(activity).inflate(R.layout.osb_webview, null);
