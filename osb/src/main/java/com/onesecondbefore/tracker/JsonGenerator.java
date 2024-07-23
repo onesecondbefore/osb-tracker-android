@@ -34,10 +34,12 @@ final class JsonGenerator {
     private static final String TAG = "OSB:Json";
 
     private final Context mContext;
+    private final Config mConfig;
     private Map<String, Object> mSetDataObject;
 
-    JsonGenerator(Context context) {
+    JsonGenerator(Context context, Config config) {
         this.mContext = context;
+        this.mConfig = config;
     }
 
     public JSONObject generate(Config config, Event event, String eventKey,
@@ -71,7 +73,10 @@ final class JsonGenerator {
             Log.e(TAG, "generate - " + e.getMessage());
         }
 
-        Log.i(TAG, eventJson.toString());
+        if (mConfig.isDebugEnabled()){
+            Log.i(TAG, eventJson.toString());
+        }
+
         return eventJson;
     }
 
@@ -193,7 +198,7 @@ final class JsonGenerator {
         JSONObject json = new JSONObject();
         try {
             json.put("st", System.currentTimeMillis());
-            json.put("tv", "7.4." + BuildConfig.gitCommitIdAbbrev);
+            json.put("tv", "7.5.0." + BuildConfig.gitCommitIdAbbrev);
             json.put("cs", 0);
             json.put("is", hasValidGeoLocation(event) ? 0 : 1);
             json.put("aid", config.getAccountId());
