@@ -484,7 +484,7 @@ public final class OSB implements DefaultLifecycleObserver {
     public boolean isIABConsentValid(String tcString) {
         try {
             TCString mTcString = TCString.decode(tcString);
-            return getRemoteCmpVersion() > mTcString.getCmpVersion();
+            return getRemoteCmpVersion() <= mTcString.getCmpVersion();
         } catch (Exception e) {
             Log.e(TAG, "OSB Error: couldn't decode TCString.");
         }
