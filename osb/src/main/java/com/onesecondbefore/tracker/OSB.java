@@ -13,8 +13,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
 import android.webkit.WebSettings;
+import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -22,9 +22,16 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.preference.PreferenceManager;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
+import com.iabtcf.decoder.TCString;
+import com.iabtcf.exceptions.TCStringDecodeException;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,7 +40,6 @@ import org.json.JSONObject;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -43,15 +49,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.iabtcf.decoder.TCString;
-import com.iabtcf.exceptions.TCStringDecodeException;
+interface OnLoginCompleteListener {
+    void onLoginComplete(String response);
+}
 
 public final class OSB implements DefaultLifecycleObserver {
     private static final String TAG = "OSB:Api";
+    private static final String SPIdentifier = "osb-shared-preferences";
+    private static final String SPConsentKey = "osb-consent";
+    private static final String SPConsentExpirationKey = "osb-consent-expiration";
+    private static final String SPCDUIDKey = "osb-cduid";
+    private static final String SPRemoteCmpKey = "osb-remote-cmp";
+    private static final String SPLocalCmpKey = "osb-local-cmp";
+    private static final String SPCmpCheckTimestamp = "osb-cmp-check-timestamp";
+    private static final String SPGoogleConsentKey = "osb-cmp-google-consent";
     private static OSB mInstance = null;
     private final Config mConfig = new Config();
     private GpsTracker mGpsTracker = null;
@@ -67,35 +78,14 @@ public final class OSB implements DefaultLifecycleObserver {
     private ArrayList<Map<String, Object>> mIds = new ArrayList<>();
     private WebView mWebView;
     private AlertDialog mConsentDialog;
-
-
-
     private OnGoogleConsentModeCallback onGoogleConsentModeCallback;
-    public interface OnGoogleConsentModeCallback {
-        public void onGoogleConsentMode(Map<String, String> consent);
-    }
 
-    private static final String SPIdentifier = "osb-shared-preferences";
-    private static final String SPConsentKey = "osb-consent";
-    private static final String SPConsentExpirationKey = "osb-consent-expiration";
-    private static final String SPCDUIDKey = "osb-cduid";
-    private static final String SPRemoteCmpKey = "osb-remote-cmp";
-    private static final String SPLocalCmpKey = "osb-local-cmp";
-    private static final String SPCmpCheckTimestamp = "osb-cmp-check-timestamp";
-    private static final String SPGoogleConsentKey = "osb-cmp-google-consent";
+    public static OSB getInstance() {
+        if (mInstance == null) {
+            mInstance = new OSB();
+        }
 
-
-
-    public enum HitType {
-        IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING, VIEWABLE_IMPRESSION, AGGREGATE
-    }
-
-    public enum SetType {
-        ACTION, EVENT, ITEM, PAGE
-    }
-
-    public enum AggregateType {
-        MAX, MIN, COUNT, SUM, AVERAGE
+        return mInstance;
     }
 
     @Override
@@ -106,14 +96,6 @@ public final class OSB implements DefaultLifecycleObserver {
             mInstance.clear();
             mInstance = null;
         }
-    }
-
-    public static OSB getInstance() {
-        if (mInstance == null) {
-            mInstance = new OSB();
-        }
-
-        return mInstance;
     }
 
     private void hideConsentWebview() {
@@ -153,9 +135,12 @@ public final class OSB implements DefaultLifecycleObserver {
         startGpsTracker();
 
         if (mQueue != null) {
-            new Thread( new Runnable() { @Override public void run() {
-                mQueue.resume();
-            } } ).start();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    mQueue.resume();
+                }
+            }).start();
         }
     }
 
@@ -211,7 +196,7 @@ public final class OSB implements DefaultLifecycleObserver {
 
     @SuppressLint("SetJavaScriptEnabled")
     public void showConsentWebview(Activity activity, Boolean forceShow) {
-        if (forceShow || shouldShowConsentWebview()){
+        if (forceShow || shouldShowConsentWebview()) {
             View view = LayoutInflater.from(activity).inflate(R.layout.osb_webview, null);
             mWebView = view.findViewById(R.id.osbwebview);
             mWebView.addJavascriptInterface(this, "osbCmpMessageHandler");
@@ -256,10 +241,6 @@ public final class OSB implements DefaultLifecycleObserver {
         mIds = data;
     }
 
-    public void setConsent(String data) {
-        setConsent(data, true);
-    }
-
     public void setConsent(String data, Boolean useConsentCallback) {
         try {
             decodeAndStoreIABConsent(data);
@@ -284,13 +265,6 @@ public final class OSB implements DefaultLifecycleObserver {
         setConsent(new String[]{data});
     }
 
-    public void setConsent(String[] data) {
-        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putStringSet(SPConsentKey, new HashSet<>(Arrays.asList(data)));
-        editor.apply();
-    }
-
     public String[] getConsent() {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
         Set<String> set = preferences.getStringSet(SPConsentKey, new HashSet<String>());
@@ -300,6 +274,16 @@ public final class OSB implements DefaultLifecycleObserver {
         return arr;
     }
 
+    public void setConsent(String data) {
+        setConsent(data, true);
+    }
+
+    public void setConsent(String[] data) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putStringSet(SPConsentKey, new HashSet<>(Arrays.asList(data)));
+        editor.apply();
+    }
 
     public void sendScreenView(String screenName) {
         sendScreenView(screenName, null, null);
@@ -356,6 +340,7 @@ public final class OSB implements DefaultLifecycleObserver {
         // Store data object for next send() ^MB
         set(SetType.PAGE, data);
     }
+
     public void sendPageView(String url, String title, String referrer, Map<String, Object> data) {
         if (data == null) {
             data = new HashMap<>();
@@ -388,6 +373,7 @@ public final class OSB implements DefaultLifecycleObserver {
     public void sendEvent(String category, String action, String label, Double value, Map<String, Object> data) {
         sendEvent(category, action, label, value, data, null);
     }
+
     public void sendEvent(String category, String action, String label, Double value, Map<String, Object> data, Boolean interaction) {
         if (data == null) {
             data = new HashMap<>();
@@ -439,8 +425,7 @@ public final class OSB implements DefaultLifecycleObserver {
         send(type, null, data);
     }
 
-    public void send(HitType type, String actionType,
-                     Map<String, Object> data) {
+    public void send(HitType type, String actionType, Map<String, Object> data) {
 //        if (type == HitType.AGGREGATE) {
 //            throw new IllegalArgumentException("Please use sendAggregate() instead of send(HitType.Aggregate, ...)");
 //        }
@@ -496,20 +481,18 @@ public final class OSB implements DefaultLifecycleObserver {
         return false;
     }
 
-    public Map<String, String> getGoogleConsentPayload() {
-
-        return getGoogleConsentMode();
+    public boolean isIABConsentValid(String tcString) {
+        try {
+            TCString mTcString = TCString.decode(tcString);
+            return getRemoteCmpVersion() > mTcString.getCmpVersion();
+        } catch (Exception e) {
+            Log.e(TAG, "OSB Error: couldn't decode TCString.");
+        }
+        return false;
     }
 
-    /* Deprecated Functions */
-
-    /**
-     * @deprecated This enum is renamed to 'HitType'
-     * <p> Use {@link HitType} instead. </p>
-     */
-    @Deprecated
-    public enum EventType {
-        IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING
+    public Map<String, String> getGoogleConsentPayload() {
+        return getGoogleConsentMode();
     }
 
     /**
@@ -538,9 +521,6 @@ public final class OSB implements DefaultLifecycleObserver {
     public void reset() {
         remove();
     }
-
-    /* Private Functions */
-
 
     private void processConsentCallback(String consentCallbackString) {
         hideConsentWebview();
@@ -592,6 +572,8 @@ public final class OSB implements DefaultLifecycleObserver {
         }
     }
 
+    /* Deprecated Functions */
+
     private JSONObject convertConsentCallbackToJSON(String consentCallbackString) {
         try {
             JSONObject obj = new JSONObject(consentCallbackString);
@@ -607,6 +589,11 @@ public final class OSB implements DefaultLifecycleObserver {
         return BuildConfig.versionName;
     }
 
+    private Long getConsentExpiration() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        return preferences.getLong(SPConsentExpirationKey, 0);
+    }
+
     private void setConsentExpiration(Long timestamp) {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
@@ -614,16 +601,18 @@ public final class OSB implements DefaultLifecycleObserver {
         editor.apply();
     }
 
-    private Long getConsentExpiration() {
-        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        return preferences.getLong(SPConsentExpirationKey, 0);
-    }
+    /* Private Functions */
 
     private Boolean shouldShowConsentWebview() {
         if (shouldResurfaceCmp()) {
             return true;
         }
         return getConsentExpiration() < System.currentTimeMillis();
+    }
+
+    private String getCDUID() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        return preferences.getString(SPCDUIDKey, null);
     }
 
     private void setCDUID(String cduid) {
@@ -633,29 +622,12 @@ public final class OSB implements DefaultLifecycleObserver {
         editor.apply();
     }
 
-    private String getCDUID() {
-        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        return preferences.getString(SPCDUIDKey, null);
-    }
-
     private void processSpecialFeatures(ArrayList<Integer> specialFeatures) {
         this.hasLocationConsent = specialFeatures.contains(1);
     }
 
-    private void setGoogleConsentMode(Map<String,String> consent) {
-        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        if (preferences != null){
-            JSONObject jsonObject = new JSONObject(consent);
-            String jsonString = jsonObject.toString();
-            preferences.edit()
-                    .remove(SPGoogleConsentKey)
-                    .putString(SPGoogleConsentKey, jsonString)
-                    .apply();
-        }
-    }
-
-    private Map<String,String> getGoogleConsentMode() {
-        Map<String,String> outputMap = new HashMap<>();
+    private Map<String, String> getGoogleConsentMode() {
+        Map<String, String> outputMap = new HashMap<>();
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
         try {
             if (preferences != null) {
@@ -673,6 +645,20 @@ public final class OSB implements DefaultLifecycleObserver {
         return outputMap;
     }
 
+    private void setGoogleConsentMode(Map<String, String> consent) {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        if (preferences != null) {
+            JSONObject jsonObject = new JSONObject(consent);
+            String jsonString = jsonObject.toString();
+            preferences.edit().remove(SPGoogleConsentKey).putString(SPGoogleConsentKey, jsonString).apply();
+        }
+    }
+
+    private int getRemoteCmpVersion() {
+        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
+        return preferences.getInt(SPRemoteCmpKey, 0);
+    }
+
     private void setRemoteCmpVersion(int cmpVersion) {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
@@ -681,9 +667,9 @@ public final class OSB implements DefaultLifecycleObserver {
         editor.apply();
     }
 
-    private int getRemoteCmpVersion() {
+    private int getLocalCmpVersion() {
         SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        return preferences.getInt(SPRemoteCmpKey, 0);
+        return preferences.getInt(SPLocalCmpKey, 0);
     }
 
     private void setLocalCmpVersion(int cmpVersion) {
@@ -691,11 +677,6 @@ public final class OSB implements DefaultLifecycleObserver {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt(SPLocalCmpKey, cmpVersion);
         editor.apply();
-    }
-
-    private int getLocalCmpVersion() {
-        SharedPreferences preferences = mContext.getSharedPreferences(SPIdentifier, Context.MODE_PRIVATE);
-        return preferences.getInt(SPLocalCmpKey, 0);
     }
 
     private long getCmpCheckTimestamp() {
@@ -750,7 +731,7 @@ public final class OSB implements DefaultLifecycleObserver {
         return Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
-    private String getUserUID()  {
+    private String getUserUID() {
         if (getCDUID() != null) {
             return getCDUID();
         }
@@ -769,7 +750,7 @@ public final class OSB implements DefaultLifecycleObserver {
 
     private String getConsentWebviewURL() {
         String consent = "";
-        if (getConsent().length > 0){
+        if (getConsent().length > 0) {
             consent = getConsent()[0];
         }
         var siteIdURL = "&sid=" + mConfig.getSiteId();
@@ -789,13 +770,11 @@ public final class OSB implements DefaultLifecycleObserver {
         mGpsTracker.startTracker();
     }
 
-    private void sendEventToQueue(OSB.HitType type, String actionType,
-                                  Map<String, Object> data) {
+    private void sendEventToQueue(OSB.HitType type, String actionType, Map<String, Object> data) {
         if (mQueue != null) {
             this.startGpsTracker();
 
-            final Event event = new Event(type, actionType, data,
-                    hasLocationConsent && mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
+            final Event event = new Event(type, actionType, data, hasLocationConsent && mGpsTracker.canGetLocation(), mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
 
             String viewId = getViewId(event);
             Map<String, Object> setData = new HashMap<String, Object>(mSetDataObject);
@@ -803,8 +782,7 @@ public final class OSB implements DefaultLifecycleObserver {
             Thread t = new Thread(new Runnable() {
                 public void run() {
                     JsonGenerator generator = new JsonGenerator(mContext, mConfig);
-                    JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData,
-                            mHitsData, getConsent(), viewId, mIds, setData, getAdvertisingClientId(), getUniqueId(), getCDUID());
+                    JSONObject jsonData = generator.generate(mConfig, event, mEventKey, mEventData, mHitsData, getConsent(), viewId, mIds, setData, getAdvertisingClientId(), getUniqueId(), getCDUID());
                     mQueue.addToQueue(mConfig.getServerUrl(), jsonData);
                 }
             });
@@ -866,21 +844,21 @@ public final class OSB implements DefaultLifecycleObserver {
     }
 
     private void fetchRemoteCmpVersion() {
-        if (getCmpCheckTimestamp() + (24 * 60 * 60 * 1000) < System.currentTimeMillis()){
+        if (getCmpCheckTimestamp() + (24 * 60 * 60 * 1000) < System.currentTimeMillis()) {
             requestRemoteCmpVersion();
         }
     }
 
     private void requestRemoteCmpVersion() {
         RequestQueue mRequestQueue = Volley.newRequestQueue(mContext);
-        StringRequest mStringRequest = new StringRequest(Request.Method.GET, getCmpVersionUrl(), this::processFetchedCmpResponse, error -> Log.i(TAG,"OSB Error :" + error.toString()));
+        StringRequest mStringRequest = new StringRequest(Request.Method.GET, getCmpVersionUrl(), this::processFetchedCmpResponse, error -> Log.e(TAG, "OSB Error :" + error.toString()));
         mRequestQueue.add(mStringRequest);
     }
 
     private String getCmpVersionUrl() {
         final HashCode hashCode = Hashing.sha1().hashString(mConfig.getAccountId() + '-' + mConfig.getSiteId(), Charset.defaultCharset());
         String hash = hashCode.toString().substring(0, 8);
-        return "https://cdn.onesecondbefore.com/cmp/"+hash+".json";
+        return "https://cdn.onesecondbefore.com/cmp/" + hash + ".json";
     }
 
     private void decodeAndStoreIABConsent(String consent) {
@@ -919,7 +897,7 @@ public final class OSB implements DefaultLifecycleObserver {
 
             Set<Integer> vendorIds = tcString.getVendorConsent().toSet();
             int maxId = 0;
-            for (int i: vendorIds) {
+            for (int i : vendorIds) {
                 if (maxId < i) {
                     maxId = i;
                 }
@@ -974,7 +952,8 @@ public final class OSB implements DefaultLifecycleObserver {
                 put("AD_USER_DATA", "DENIED");
                 put("AD_PERSONALIZATION", "DENIED");
                 put("ANALYTICS_STORAGE", "GRANTED");
-            }};
+            }
+        };
 
         if (purposes.contains(1)) {
             consent.put("AD_STORAGE", "GRANTED");
@@ -994,7 +973,7 @@ public final class OSB implements DefaultLifecycleObserver {
     private List<Integer> convertIABToPurposes(String consentString) {
         List<Integer> list = new ArrayList<>();
         TCString tcString = TCString.decode(consentString);
-        Iterable<Integer> iterable =  tcString.getPurposesConsent();
+        Iterable<Integer> iterable = tcString.getPurposesConsent();
         for (Integer item : iterable) {
             list.add(item);
         }
@@ -1002,7 +981,7 @@ public final class OSB implements DefaultLifecycleObserver {
     }
 
     private void log(String message) {
-        if (mConfig.isDebugEnabled()){
+        if (mConfig.isDebugEnabled()) {
             Log.i(TAG, message);
         }
     }
@@ -1012,8 +991,29 @@ public final class OSB implements DefaultLifecycleObserver {
     public void postMessage(String consentCallbackString) {
         processConsentCallback(consentCallbackString);
     }
-}
 
-interface OnLoginCompleteListener {
-    void onLoginComplete(String response);
+    public enum HitType {
+        IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING, VIEWABLE_IMPRESSION, AGGREGATE
+    }
+
+    public enum SetType {
+        ACTION, EVENT, ITEM, PAGE
+    }
+
+    public enum AggregateType {
+        MAX, MIN, COUNT, SUM, AVERAGE
+    }
+
+    /**
+     * @deprecated This enum is renamed to 'HitType'
+     * <p> Use {@link HitType} instead. </p>
+     */
+    @Deprecated
+    public enum EventType {
+        IDS, SOCIAL, EVENT, ACTION, EXCEPTION, PAGEVIEW, SCREENVIEW, TIMING
+    }
+
+    public interface OnGoogleConsentModeCallback {
+        public void onGoogleConsentMode(Map<String, String> consent);
+    }
 }
