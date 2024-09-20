@@ -37,6 +37,7 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.iabtcf.decoder.TCString;
 import com.iabtcf.exceptions.TCStringDecodeException;
+import com.iabtcf.v2.PublisherRestriction;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -527,6 +528,13 @@ public final class OSB implements DefaultLifecycleObserver {
         remove();
     }
 
+    public void printAllPrefs() {
+        SharedPreferences mPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        Map<String, ?> allEntries = mPreferences.getAll();
+        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+            Log.d("map values", entry.getKey() + ": " + entry.getValue().toString());
+        }
+    }
     private void processConsentCallback(String consentCallbackString) {
         hideConsentWebview();
 
@@ -916,12 +924,20 @@ public final class OSB implements DefaultLifecycleObserver {
                 specialFeaturesOptIns.append(tcString.getSpecialFeatureOptIns().contains(i) ? "1" : "0");
             }
 
+            removeAllPublisherRestrictions(editor);
+            for (PublisherRestriction publisherRestriction: tcString.getPublisherRestrictions()) {
+                StringBuilder vendorRestriction = new StringBuilder();
+                for (int i = 1; i <= maxId; i++) {
+                    vendorRestriction.append(publisherRestriction.getVendorIds().contains(i) ? "1" : "0");
+                }
+                editor.putString("IABTCF_PublisherRestrictions" + publisherRestriction.getPurposeId(), vendorRestriction.toString());
+            }
+
             editor.putString("IABTCF_VendorConsents", vendorConsents.toString());
             editor.putString("IABTCF_VendorLegitimateInterests", vendorLegitimateInterests.toString());
             editor.putString("IABTCF_PurposeConsents", purposeConsents.toString());
             editor.putString("IABTCF_PurposeLegitimateInterests", purposeLegitimateInterests.toString());
             editor.putString("IABTCF_SpecialFeaturesOptIns", specialFeaturesOptIns.toString());
-//            IABTCF_PublisherRestrictions{ID} TODO: implement. ^MB
             editor.putString("IABTCF_PublisherConsent", publisherConsents.toString());
             editor.putString("IABTCF_PublisherLegitimateInterests", publisherLegitimateInterests.toString());
             editor.putString("IABTCF_PublisherCustomPurposesConsents", publisherCustomPurposesConsents.toString());
@@ -945,8 +961,15 @@ public final class OSB implements DefaultLifecycleObserver {
             editor.remove("IABTCF_PublisherLegitimateInterests");
             editor.remove("IABTCF_PublisherCustomPurposesConsents");
             editor.remove("IABTCF_PublisherCustomPurposesLegitimateInterests");
+            removeAllPublisherRestrictions(editor);
         } finally {
             editor.commit();
+        }
+    }
+
+    private void removeAllPublisherRestrictions(SharedPreferences.Editor editor) {
+        for (int i = 1; i <= 20; i++) {
+            editor.remove("IABTCF_PublisherRestrictions" + i);
         }
     }
 
