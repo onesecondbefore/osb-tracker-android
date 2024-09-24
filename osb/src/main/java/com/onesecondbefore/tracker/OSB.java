@@ -553,6 +553,9 @@ public final class OSB implements DefaultLifecycleObserver {
                 String consentString = consent.getString("tcString");
                 setConsent(consentString);
 
+                String addtlConsentString = consent.getString("addtlConsent");
+                setAdditionalConsent(addtlConsentString);
+
                 Long expirationDate = json.getLong("expirationDate");
                 setConsentExpiration(expirationDate);
                 String cduid = json.getString("cduid");
