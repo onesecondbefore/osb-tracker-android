@@ -64,6 +64,7 @@ public final class OSB implements DefaultLifecycleObserver {
     private static final String SPLocalCmpKey = "osb-local-cmp";
     private static final String SPCmpCheckTimestamp = "osb-cmp-check-timestamp";
     private static final String SPGoogleConsentKey = "osb-cmp-google-consent";
+    private static final String SPIABTCFAdditionalConsents = "IABTCF_AddtlConsent";
     private static OSB mInstance = null;
     private final Config mConfig = new Config();
     private GpsTracker mGpsTracker = null;
@@ -284,6 +285,18 @@ public final class OSB implements DefaultLifecycleObserver {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putStringSet(SPConsentKey, new HashSet<>(Arrays.asList(data)));
         editor.apply();
+    }
+
+    public void setAdditionalConsent(String data) {
+        SharedPreferences mPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString(SPIABTCFAdditionalConsents, data);
+        editor.apply();
+    }
+
+    public String getAdditionalConsent() {
+        SharedPreferences mPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        return mPreferences.getString(SPIABTCFAdditionalConsents, "");
     }
 
     public void sendScreenView(String screenName) {
