@@ -509,6 +509,43 @@ public final class OSB implements DefaultLifecycleObserver {
         return getGoogleConsentMode();
     }
 
+    public String getUserUID() {
+        if (getCDUID() != null) {
+            return getCDUID();
+        }
+
+        if (getAdvertisingClientId() != null) {
+            return getAdvertisingClientId();
+        }
+
+        if (getUniqueId() != null) {
+            return getUniqueId();
+        }
+
+        Log.e(TAG, "OSB Error: could not get userUID");
+        return "";
+    }
+
+    public String getConsentWebviewURL() {
+        String consent = "";
+        if (getConsent().length > 0) {
+            consent = getConsent()[0];
+        }
+        var siteIdURL = "&sid=" + mConfig.getSiteId();
+        String urlString = mConfig.getServerUrl() + "/consent?aid=" + mConfig.getAccountId() + siteIdURL + "&type=app&show=true&version=" + getOSBSDKVersion() + "&consent=" + consent + "&cduid=" + getUserUID();
+        return urlString;
+    }
+
+    public void printAllPrefs() {
+        SharedPreferences mPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        Map<String, ?> allEntries = mPreferences.getAll();
+        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+            Log.d("map values", entry.getKey() + ": " + entry.getValue().toString());
+        }
+    }
+
+    /* Deprecated Functions */
+
     /**
      * @deprecated This method is renamed to 'config'
      * <p> Use {@link OSB#config(Context, String, String, String)} instead. </p>
@@ -536,13 +573,7 @@ public final class OSB implements DefaultLifecycleObserver {
         remove();
     }
 
-    public void printAllPrefs() {
-        SharedPreferences mPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-        Map<String, ?> allEntries = mPreferences.getAll();
-        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
-            Log.d("map values", entry.getKey() + ": " + entry.getValue().toString());
-        }
-    }
+    /* Private Functions */
     private void processConsentCallback(String consentCallbackString) {
         hideConsentWebview();
 
@@ -595,8 +626,6 @@ public final class OSB implements DefaultLifecycleObserver {
             Log.e(TAG, t.getMessage());
         }
     }
-
-    /* Deprecated Functions */
 
     private JSONObject convertConsentCallbackToJSON(String consentCallbackString) {
         try {
@@ -753,33 +782,6 @@ public final class OSB implements DefaultLifecycleObserver {
     @SuppressLint("HardwareIds")
     private String getUniqueId() {
         return Settings.Secure.getString(mContext.getContentResolver(), Settings.Secure.ANDROID_ID);
-    }
-
-    private String getUserUID() {
-        if (getCDUID() != null) {
-            return getCDUID();
-        }
-
-        if (getAdvertisingClientId() != null) {
-            return getAdvertisingClientId();
-        }
-
-        if (getUniqueId() != null) {
-            return getUniqueId();
-        }
-
-        Log.e(TAG, "OSB Error: could not get userUID");
-        return "";
-    }
-
-    private String getConsentWebviewURL() {
-        String consent = "";
-        if (getConsent().length > 0) {
-            consent = getConsent()[0];
-        }
-        var siteIdURL = "&sid=" + mConfig.getSiteId();
-        String urlString = mConfig.getServerUrl() + "/consent?aid=" + mConfig.getAccountId() + siteIdURL + "&type=app&show=true&version=" + getOSBSDKVersion() + "&consent=" + consent + "&cduid=" + getUserUID();
-        return urlString;
     }
 
     private void startGpsTracker() {
